@@ -1,0 +1,76 @@
+/* Brand Colors */
+:root {
+  --forest-ink: #263F36;   /* Dark green */
+  --muted-jade: #5B8B72;   /* Medium green */
+  --brick-red: #B84A45;    /* Accent red */
+  --brushed-gold: #C4A66A; /* Warm gold */
+  --soft-ivory: #F6F3EA;   /* Background */
+}
+
+body {
+  font-family: 'Arial', sans-serif;
+  margin: 0;
+  padding: 0;
+  background-color: var(--soft-ivory);
+  color: var(--forest-ink);
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* Display Screen */
+.display {
+  flex: 1;
+  background-color: var(--muted-jade);
+  color: var(--soft-ivory);
+  padding: 20px;
+  text-align: center;
+  font-size: 1.2rem;
+  border-bottom: 4px solid var(--brushed-gold);
+}
+
+/* Score text */
+.score {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: var(--brick-red);
+  margin-top: 10px;
+}
+
+/* Keyboard */
+.keyboard {
+  background-color: var(--forest-ink);
+  padding: 10px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(50px, 1fr));
+  gap: 8px;
+}
+
+.tile-btn {
+  font-size: 28px;
+  padding: 10px;
+  background-color: var(--brushed-gold);
+  color: var(--forest-ink);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: transform 0.1s ease;
+}
+
+.tile-btn:active {
+  transform: scale(0.9);
+  background-color: var(--brick-red);
+  color: var(--soft-ivory);
+}
+
+/* Responsive tweaks */
+@media (max-width: 600px) {
+  .display {
+    font-size: 1rem;
+    padding: 15px;
+  }
+  .tile-btn {
+    font-size: 24px;
+    padding: 8px;
+  }
+}
