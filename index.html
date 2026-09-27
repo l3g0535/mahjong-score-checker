@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Mahjong Score Checker</title>
+  <style>
+    body { font-family: Arial, sans-serif; text-align: center; margin: 20px; }
+    .tiles { display: flex; flex-wrap: wrap; justify-content: center; margin-top: 20px; }
+    .tile-btn {
+      font-size: 28px; margin: 5px; padding: 10px;
+      border: 1px solid #ccc; border-radius: 8px; cursor: pointer;
+    }
+    .hand { margin-top: 20px; font-size: 22px; }
+    .score { margin-top: 10px; font-size: 24px; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <h1>Mahjong Score Checker</h1>
+  <div class="hand" id="hand">Hand: </div>
+  <div class="score" id="score">Score: 0</div>
+  <button onclick="calculateScore()">Calculate Score</button>
+
+  <div class="tiles" id="keyboard"></div>
+
+  <script>
+    const tiles = [
+      "🀇","🀈","🀉","🀊","🀋","🀌","🀍","🀎","🀏", // Bamboo
+      "🀐","🀑","🀒","🀓","🀔","🀕","🀖","🀗","🀘", // Characters
+      "🀙","🀚","🀛","🀜","🀝","🀞","🀟","🀠","🀡", // Dots
+      "🀀","🀁","🀂","🀃","🀄","🀅","🀆" // Winds & Dragons
+    ];
+
+    let hand = [];
+
+    function renderKeyboard() {
+      const kb = document.getElementById("keyboard");
+      tiles.forEach(tile => {
+        const btn = document.createElement("button");
+        btn.className = "tile-btn";
+        btn.textContent = tile;
+        btn.onclick = () => addTile(tile);
+        kb.appendChild(btn);
+      });
+    }
+
+    function addTile(tile) {
+      hand.push(tile);
+      document.getElementById("hand").textContent = "Hand: " + hand.join(" ");
+    }
+
+    function calculateScore() {
+      // Placeholder scoring logic: 2 points per tile
+      const score = hand.length * 2;
+      document.getElementById("score").textContent = "Score: " + score;
+    }
+
+    renderKeyboard();
+  </script>
+</body>
+</html>
