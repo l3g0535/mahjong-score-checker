@@ -548,6 +548,8 @@ function calculateScore() {
   }
 
   // Base & Stackable Hands
+  const isSevenPairsHand = isSevenPairs(normalTiles);
+  
   if (isSmallThreeDragons(melds, pair)) matchedRules.push({ name: "Small Three Dragons", fan: 5 });
   if (isAllSequences(normalTiles, melds, pair)) matchedRules.push({ name: "All Sequences", fan: 1 });
   if (isAllPongs(melds, pair)) matchedRules.push({ name: "All Pongs", fan: 3 });
@@ -565,17 +567,18 @@ function calculateScore() {
   if (document.getElementById("robbingKong")?.checked) matchedRules.push({ name: "Robbing Kong", fan: 1 });
   if (document.getElementById("replacementTile")?.checked) matchedRules.push({ name: "Replacement Tile", fan: 1 });
 
-  // Dragons & Winds
-  if (!matchedRules.some(r => r.name.includes("Three Dragons"))) {
-    matchedRules.push(...getDragonPongs(normalTiles));
+  // Dragons & Winds (Excluded if hand is Seven Pairs)
+  if (!isSevenPairsHand) {
+    if (!matchedRules.some(r => r.name.includes("Three Dragons"))) {
+      matchedRules.push(...getDragonPongs(normalTiles));
+    }
+    if (normalTiles.filter(t => t === currentSeatWind).length >= 3) {
+      matchedRules.push({ name: "Seat Wind Pong", fan: 1 });
+    }
+    if (normalTiles.filter(t => t === currentTableWind).length >= 3) {
+      matchedRules.push({ name: "Table Wind Pong", fan: 1 });
+    }
   }
-  if (normalTiles.filter(t => t === currentSeatWind).length >= 3) {
-    matchedRules.push({ name: "Seat Wind Pong", fan: 1 });
-  }
-  if (normalTiles.filter(t => t === currentTableWind).length >= 3) {
-    matchedRules.push({ name: "Table Wind Pong", fan: 1 });
-  }
-
   // Chicken Hand
   if (matchedRules.length === 0) {
     matchedRules.push({ name: "Chicken Hand", fan: 0 });
