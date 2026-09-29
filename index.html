@@ -2,23 +2,113 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Mahjong Score Checker</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Score Checker</title>
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="mylogo.png">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <!-- Display Screen -->
-  <div class="display">
-    <h1>Mahjong Score Checker</h1>
-    <div id="hand">Hand: </div>
-    <div id="score" class="score">Score: 0</div>
-    <div id="rules"></div>
-    <button id="calcBtn">Calculate Score</button>
-  </div>
+  <main class="display">
+    <header class="app-header">
+      <img src="mylogo.png" alt="Logo" class="app-logo">
+      <h1>Score Checker</h1>
+    </header>
+      <!-- Top Container: Side-by-Side Squares -->
+      <div class="score-card">
+        <!-- Left Square: Clean Big Score -->
+        <div class="score-box">
+          <span class="score-label">SCORE</span>
+          <h2 id="score">0</h2>
+        </div>
 
-  <!-- Keyboard -->
-  <div class="keyboard" id="keyboard"></div>
+        <!-- Right Square: Matched Rules & Status Messages -->
+        <div id="rulesContainer" class="rules-box">
+          <div id="rules">
+            <span class="info-text">You need 14 non-flower tiles for score calculation (Currently: 0/14).</span>
+          </div>
+        </div>
+      </div>
+       <!-- Sticky Wrapper for Hand & Controls -->
+      <div class="sticky-hand-container">
+      <!-- Hand Display Area -->
+      <div id="hand" class="hand-box"></div>
 
-  <!-- Load app.js as a module -->
-  <script type="module" src="app.js"></script>
+      <!-- Hand Actions Row (Tile counter far left, Clear button far right) -->
+      <div class="hand-actions">
+        <span id="tileCount">Tiles: 0</span>
+        <button id="clearBtn" class="clear-btn">Clear Hand</button>
+      </div>
+
+    </div>
+      
+    <!-- Wind Selectors & Settings -->
+    <section class="settings-panel">
+      <div class="setting-group">
+        <label for="seatWind">Seat Wind:</label>
+        <select id="seatWind">
+          <option value="tiles/04-east-wind.svg">East (東)</option>
+          <option value="tiles/05-south-wind.svg">South (南)</option>
+          <option value="tiles/06-west-wind.svg">West (西)</option>
+          <option value="tiles/07-north-wind.svg">North (北)</option>
+        </select>
+      </div>
+
+      <div class="setting-group">
+        <label for="tableWind">Table Wind:</label>
+        <select id="tableWind">
+          <option value="tiles/04-east-wind.svg">East (東)</option>
+          <option value="tiles/05-south-wind.svg">South (南)</option>
+          <option value="tiles/06-west-wind.svg">West (西)</option>
+          <option value="tiles/07-north-wind.svg">North (北)</option>
+        </select>
+      </div>
+
+      <div class="setting-group slider-group">
+        <label for="maxPoints">Max Fan Cap: <output id="maxPointsValue" for="maxPoints">13</output></label>
+        <input type="range" id="maxPoints" min="13" max="18" value="13" step="1">
+      </div>
+
+      <div class="checkbox-group">
+        <label class="checkbox-label"><input type="checkbox" id="ziMo"> Self-Drawn </label>
+        <label class="checkbox-label"><input type="checkbox" id="concealedHand"> Concealed Hand</label>
+        <label class="checkbox-label"><input type="checkbox" id="robbingKong"> Robbing Kong</label>
+        <label class="checkbox-label"><input type="checkbox" id="replacementTile"> Replacement Tile</label>
+        <label class="checkbox-label"><input type="checkbox" id="instantFlowerWin"> 8-Flower Win</label>
+        <label class="checkbox-label"><input type="checkbox" id="heavenlyHand" disabled> Heavenly Hand</label>
+        <label class="checkbox-label"><input type="checkbox" id="earthlyHand" disabled> Earthly Hand</label>
+      </div>
+    </section>
+
+    <!-- Tile Keyboard Input -->
+    <section class="keyboard">
+      <h2>Honors (字牌)</h2>
+      <div class="tile-row-wrapper">
+        <div class="tile-row" id="honors"></div>
+      </div>
+
+      <h2>Characters (萬子)</h2>
+      <div class="tile-row-wrapper">
+        <div class="tile-row" id="characters"></div>
+      </div>
+
+      <h2>Circles (筒子)</h2>
+      <div class="tile-row-wrapper">
+        <div class="tile-row" id="circles"></div>
+      </div>
+
+      <h2>Bamboos (索子)</h2>
+      <div class="tile-row-wrapper">
+        <div class="tile-row" id="bamboos"></div>
+      </div>
+
+      <h2>Flowers & Seasons (花牌)</h2>
+      <div class="tile-row-wrapper">
+        <div class="tile-row" id="flowersandseasons"></div>
+      </div>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
 </body>
 </html>

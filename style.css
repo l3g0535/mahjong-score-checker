@@ -1,76 +1,574 @@
-/* Brand Colors */
 :root {
-  --forest-ink: #263F36;   /* Dark green */
-  --muted-jade: #5B8B72;   /* Medium green */
-  --brick-red: #B84A45;    /* Accent red */
-  --brushed-gold: #C4A66A; /* Warm gold */
-  --soft-ivory: #F6F3EA;   /* Background */
+  --primary-color: #2b6cb0;
+  --bg-color: #f7fafc;
+  --card-bg: #ffffff;
+  --border-color: #e2e8f0;
+  --danger-color: #e53e3e;
+  --text-color: #2d3748;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
 }
 
 body {
-  font-family: 'Arial', sans-serif;
-  margin: 0;
-  padding: 0;
-  background-color: var(--soft-ivory);
-  color: var(--forest-ink);
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  line-height: 1.4;
+  padding-bottom: 20px;
+}
+
+.display {
+  max-width: 650px;
+  margin: 0 auto;
+  padding: 12px;
+}
+
+.app-header h1 {
+  font-size: 1.4rem;
+  text-align: center;
+  margin-bottom: 10px;
+  color: #1a202c;
+}
+
+/* Sticky Hand & Score Section */
+.sticky-top-container {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background-color: var(--bg-color);
+  padding-top: 4px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border-color);
+  margin-bottom: 12px;
+}
+
+.readout-panel {
+  background: var(--card-bg);
+  padding: 10px 14px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  border: 1px solid var(--border-color);
+}
+
+.readout-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: bold;
+}
+
+.score {
+  font-size: 1.25rem;
+  color: var(--primary-color);
+}
+
+.tile-count {
+  font-size: 0.85rem;
+  color: #718096;
+}
+
+.status-message {
+  margin-top: 4px;
+  font-size: 0.85rem;
+  font-style: italic;
+  color: var(--danger-color);
+  min-height: 18px;
+}
+
+/* Hand Box Display */
+.hand-box {
+  min-height: 62px;
+  background: var(--card-bg);
+  border: 2px dashed #cbd5e0;
+  border-radius: 8px;
+  padding: 6px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  align-items: center;
+  margin-top: 8px;
+  max-height: 130px;
+  overflow-y: auto;
+  touch-action: pan-y;
+}
+
+.hand-tile {
+  width: 36px;
+  height: 48px;
+  object-fit: contain;
+  padding: 2px;
+  border: 1px solid #cbd5e0;
+  border-radius: 6px;
+  background: #ffffff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  cursor: pointer;
+  user-select: none;
+  transition: transform 0.1s ease, background-color 0.1s ease;
+}
+
+.hand-tile:active {
+  transform: scale(0.92);
+  background-color: #edf2f7;
+}
+
+.tile-spacer {
+  display: inline-block;
+  width: 10px;
+  height: 48px;
+  border-right: 2px dashed #a0aec0;
+  margin: 0 2px;
+}
+
+.rules-container {
+  font-size: 0.85rem;
+  margin-top: 6px;
+  max-height: 60px;
+  overflow-y: auto;
+  color: #4a5568;
+}
+
+/* Clear Button Action Wrapper */
+.hand-actions {
+  display: flex !important;
+  justify-content: flex-end !important;
+  align-items: center !important;
+  width: 100%;
+  margin-top: 6px;
+}
+
+/* Compact Rectangular Clear Button */
+.btn-clear {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto !important;
+  width: auto !important;
+  max-width: max-content !important;
+  padding: 6px 14px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  border-radius: 6px;
+  background-color: var(--danger-color);
+  color: #ffffff;
+  border: none;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: background-color 0.15s ease;
+}
+
+.btn-clear:active {
+  background-color: #c53030;
+}
+
+/* Settings & Sliders Panel */
+.settings-panel {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  background: var(--card-bg);
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  margin-bottom: 12px;
+}
+
+.setting-group {
+  flex: 1 1 45%;
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
+  gap: 4px;
+  font-size: 0.85rem;
 }
 
-/* Display Screen */
-.display {
-  flex: 1;
-  background-color: var(--muted-jade);
-  color: var(--soft-ivory);
-  padding: 20px;
-  text-align: center;
-  font-size: 1.2rem;
-  border-bottom: 4px solid var(--brushed-gold);
+.setting-group select, 
+.setting-group input {
+  padding: 6px;
+  border-radius: 6px;
+  border: 1px solid #cbd5e0;
+  font-size: 0.9rem;
+  background: #fff;
+  touch-action: manipulation;
 }
 
-/* Score text */
-.score {
-  font-size: 1.5rem;
-  font-weight: bold;
-  color: var(--brick-red);
-  margin-top: 10px;
+.slider-group {
+  flex: 1 1 100%;
 }
 
-/* Keyboard */
-.keyboard {
-  background-color: var(--forest-ink);
-  padding: 10px;
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(50px, 1fr));
-  gap: 8px;
+/* Inline Checkbox Layout */
+.checkbox-group {
+  flex: 1 1 100%;
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: wrap !important;
+  align-items: center !important;
+  gap: 8px 16px;
+  margin-top: 8px;
+}
+
+.checkbox-label {
+  display: inline-flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  gap: 6px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text-color);
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+}
+
+.checkbox-label input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  flex-shrink: 0;
+  accent-color: var(--primary-color);
+  cursor: pointer;
+}
+
+/* Keyboard Section & Row Scrolling */
+.keyboard h2 {
+  font-size: 0.95rem;
+  margin: 10px 0 4px 2px;
+  color: #4a5568;
+}
+
+.tile-row-wrapper {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 4px;
+}
+
+.tile-row {
+  display: flex;
+  gap: 4px;
+  min-width: max-content;
 }
 
 .tile-btn {
-  font-size: 28px;
-  padding: 10px;
-  background-color: var(--brushed-gold);
-  color: var(--forest-ink);
-  border: none;
-  border-radius: 8px;
+  padding: 2px;
+  border: 1px solid #cbd5e0;
+  border-radius: 6px;
+  background: #fff;
   cursor: pointer;
-  transition: transform 0.1s ease;
+  touch-action: manipulation;
+  user-select: none;
 }
 
 .tile-btn:active {
-  transform: scale(0.9);
-  background-color: var(--brick-red);
-  color: var(--soft-ivory);
+  background-color: #e2e8f0;
+  transform: scale(0.95);
 }
 
-/* Responsive tweaks */
-@media (max-width: 600px) {
-  .display {
-    font-size: 1rem;
-    padding: 15px;
+.tile-btn img {
+  width: 32px;
+  height: 44px;
+  display: block;
+  object-fit: contain;
+  pointer-events: none;
+}
+
+.spacer-btn {
+  width: 32px;
+  height: 48px;
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: #718096;
+}
+
+/* Responsive Scaling for Desktop */
+@media (min-width: 480px) {
+  .hand-tile {
+    width: 40px;
+    height: 54px;
+    padding: 3px;
   }
-  .tile-btn {
-    font-size: 24px;
-    padding: 8px;
+  .tile-btn img {
+    width: 36px;
+    height: 50px;
   }
+  .setting-group {
+    flex: 1 1 30%;
+  }
+  .slider-group {
+    flex: 1 1 30%;
+  }
+}
+
+/* Responsive Scaling for Standard Mobile Screens (360px to 480px) */
+@media (min-width: 361px) and (max-width: 479px) {
+  .app-logo {
+    width: 29px;
+  }
+  .app-header h1 {
+    font-size: 1.3rem;
+  }
+  /* Hand tiles slightly smaller than desktop, larger than small mobile */
+  .hand-tile {
+    width: 34px;
+    height: 46px;
+    padding: 2px;
+  }
+
+  /* Keyboard tiles */
+  .tile-btn img {
+    width: 30px;
+    height: 42px;
+  }
+
+  /* Balanced Score Box */
+  .score-box {
+    flex: 0 0 100px;
+    padding: 10px 6px;
+  }
+
+  .score-box h2 {
+    font-size: 2rem;
+  }
+
+  /* Rules Box Text Sizing */
+  #rules, 
+  .info-text, 
+  .warning-text, 
+  .placeholder-text {
+    font-size: 0.82rem;
+  }
+
+  /* Settings dropdowns fit 2 per row cleanly */
+  .setting-group {
+    flex: 1 1 45%;
+  }
+
+  /* Slider takes full width below dropdowns */
+  .slider-group {
+    flex: 1 1 100%;
+  }
+}
+
+
+/* Responsive Scaling for Small Mobile Screens (< 360px) */
+@media (max-width: 360px) {
+  .app-logo {
+    width: 26px;
+  }
+  .app-header h1 {
+    font-size: 1.2rem;
+  }
+  /* Scale down selected hand tiles */
+  .hand-tile {
+    width: 30px;
+    height: 40px;
+    padding: 1px;
+  }
+
+  /* Scale down keyboard selection tiles */
+  .tile-btn img {
+    width: 26px;
+    height: 36px;
+  }
+
+  /* Compact score box width */
+  .score-box {
+    flex: 0 0 90px;
+    padding: 8px 4px;
+  }
+
+  .score-box h2 {
+    font-size: 1.8rem;
+  }
+
+  /* Adjust rules text size for tight screens */
+  .rules-box {
+    padding: 8px 10px;
+    min-height: 70px;
+  }
+
+  #rules, 
+  .info-text, 
+  .warning-text, 
+  .placeholder-text {
+    font-size: 0.78rem;
+  }
+
+  /* Force settings dropdowns to take full width */
+  .setting-group {
+    flex: 1 1 100%;
+  }
+
+  /* Action row spacing */
+  #tileCount {
+    font-size: 0.85rem;
+  }
+
+  .clear-btn {
+    padding: 6px 12px;
+    font-size: 0.8rem;
+  }
+}
+
+
+
+/* Top Container - Side-by-Side Layout */
+.score-card {
+  display: flex;
+  gap: 12px;
+  align-items: stretch;
+  margin-bottom: 16px;
+  width: 100%;
+}
+
+/* Left Square: Score Box */
+.score-box {
+  flex: 0 0 110px;
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.score-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: #64748b;
+}
+
+.score-box h2 {
+  margin: 4px 0 0 0;
+  color: #1e3a8a;
+  font-size: 2.4rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+/* Right Square: Rules Box (Light Green-Grey) */
+.rules-box {
+  flex: 1;
+  background-color: #f4f8f5;
+  border: 1px solid #d1e2d6;
+  border-radius: 8px;
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  min-height: 80px;
+  box-sizing: border-box;
+}
+
+#rules {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.85rem;
+  color: #2d3748;
+  max-height: 110px;
+  overflow-y: auto;
+}
+
+#rules div {
+  font-weight: 500;
+  line-height: 1.35;
+}
+
+/* Rules Box Message States */
+.info-text {
+  color: #4a5568;
+  font-size: 0.85rem;
+  line-height: 1.4;
+}
+
+.warning-text {
+  color: #e53e3e;
+  font-size: 0.85rem;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.placeholder-text {
+  color: #a0aec0;
+  font-style: italic;
+  font-size: 0.85rem;
+}
+
+/* Hand Action Controls Row (Spreads Tile Count Left, Clear Right) */
+.hand-actions {
+  display: flex !important;
+  justify-content: space-between !important; /* Pushes tile count far left, clear button far right */
+  align-items: center !important;
+  width: 100%;
+  margin-top: 10px;
+  margin-bottom: 20px;
+  box-sizing: border-box;
+}
+
+#tileCount {
+  font-weight: 600;
+  color: #4a5568;
+  font-size: 0.95rem;
+}
+
+.clear-btn {
+  background-color: #e53e3e;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-weight: bold;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: background-color 0.2s;
+}
+
+.clear-btn:hover {
+  background-color: #c53030;
+}
+/* App Header & Logo Alignment */
+.app-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.app-logo {
+  width: 32px;
+  height: auto;
+  object-fit: contain;
+}
+
+.app-header h1 {
+  font-size: 1.4rem;
+  margin-bottom: 0; /* Clears previous bottom margin */
+  color: #1a202c;
+  line-height: 1;
+}
+/* Sticky Hand Container */
+.sticky-hand-container {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background-color: var(--bg-color, #f7fafc); /* Prevents scrolled tiles from showing underneath */
+  padding-top: 6px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border-color, #e2e8f0);
+  margin-bottom: 12px;
+}
+
+/* Ensure hand-actions margin within the sticky container stays tight */
+.sticky-hand-container .hand-actions {
+  margin-top: 6px;
+  margin-bottom: 0;
 }
