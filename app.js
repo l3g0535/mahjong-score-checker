@@ -194,20 +194,28 @@ function getCounts(tiles) {
   return counts;
 }
 
-// Sequential meld parser based on tile input order
-// Recursive meld parser using backtracking
+// Tile-count constrained recursive meld parser
 function parseHandIntoMelds(normalTiles) {
+  const totalTiles = normalTiles.length;
+  
+  // Mahjong rule: 14 tiles = 0 Kongs, 15 tiles = 1 Kong, ..., 18 tiles = 4 Kongs
+  const expectedKongs = totalTiles - 14;
+
+  if (expectedKongs < 0 || expectedKongs > 4) {
+    return { melds: [], pair: null };
+  }
+
   const counts = getCounts(normalTiles);
   const uniqueTiles = Object.keys(counts);
 
-  // Try each tile that has at least 2 copies as the hand's Pair
+  // Try each tile with at least 2 copies as the hand's Pair
   for (let pairTile of uniqueTiles) {
     if (counts[pairTile] >= 2) {
       const remainingCounts = { ...counts };
       remainingCounts[pairTile] -= 2;
 
       const melds = [];
-      if (backtrackMelds(remainingCounts, melds)) {
+      if (backtrackMelds(remainingCounts, melds, expectedKongs, 0)) {
         return {
           melds,
           pair: { type: 'pair', tiles: [pairTile, pairTile] }
@@ -219,21 +227,25 @@ function parseHandIntoMelds(normalTiles) {
   return { melds: [], pair: null };
 }
 
-function backtrackMelds(counts, melds) {
-  // Find the first tile with remaining counts
+function backtrackMelds(counts, melds, targetKongs, currentKongs) {
+  // Find first remaining tile
   const tile = Object.keys(counts).find(t => counts[t] > 0);
-  if (!tile) return true; // All tiles successfully partitioned into valid melds
+  
+  // Base Case: All tiles consumed. Verify exact required Kong count and 4 total melds
+  if (!tile) {
+    return currentKongs === targetKongs && melds.length === 4;
+  }
 
   const parsed = parseTile(tile);
 
-  // Option 1: Try forming a Kong (4 identical tiles)
-  if (counts[tile] >= 4) {
+  // Option 1: Try forming a Kong ONLY if hand size allows extra Kongs
+  if (currentKongs < targetKongs && counts[tile] >= 4) {
     counts[tile] -= 4;
     melds.push({ type: 'kong', tiles: [tile, tile, tile, tile] });
 
-    if (backtrackMelds(counts, melds)) return true;
+    if (backtrackMelds(counts, melds, targetKongs, currentKongs + 1)) return true;
 
-    // Backtrack if Kong didn't lead to a valid hand structure
+    // Backtrack
     melds.pop();
     counts[tile] += 4;
   }
@@ -251,9 +263,9 @@ function backtrackMelds(counts, melds) {
       counts[tile3]--;
       melds.push({ type: 'chow', tiles: [tile, tile2, tile3] });
 
-      if (backtrackMelds(counts, melds)) return true;
+      if (backtrackMelds(counts, melds, targetKongs, currentKongs)) return true;
 
-      // Backtrack if sequence didn't yield a valid full hand
+      // Backtrack
       melds.pop();
       counts[tile]++;
       counts[tile2]++;
@@ -266,16 +278,15 @@ function backtrackMelds(counts, melds) {
     counts[tile] -= 3;
     melds.push({ type: 'pong', tiles: [tile, tile, tile] });
 
-    if (backtrackMelds(counts, melds)) return true;
+    if (backtrackMelds(counts, melds, targetKongs, currentKongs)) return true;
 
-    // Backtrack if triplet didn't yield a valid full hand
+    // Backtrack
     melds.pop();
     counts[tile] += 3;
   }
 
   return false;
 }
-
 function isValidWinningHand(normalTiles, melds, pair) {
   // 1. Check special structures
   if (isThirteenOrphans(normalTiles) || isSevenPairs(normalTiles) || isNineGates(normalTiles)) {
@@ -565,17 +576,23 @@ function calculateScore() {
   // Base & Stackable Hands
   const isSevenPairsHand = isSevenPairs(normalTiles);
   
-  if (isSmallThreeDragons(melds, pair)) matchedRules.push({ name: "Small Three Dragons", fan: 5 });
-  if (isAllSequences(normalTiles, melds, pair)) matchedRules.push({ name: "All Sequences", fan: 1 });
-  if (isAllPongs(melds, pair)) matchedRules.push({ name: "All Pongs", fan: 3 });
+  if (isSevenPairsHand) {
+    matchedRules.push({ name: "Seven Pairs", fan: 4 });
+  } else {
+    // Meld-based rules ONLY apply if NOT Seven Pairs
+    if (isSmallThreeDragons(melds, pair)) matchedRules.push({ name: "Small Three Dragons", fan: 5 });
+    if (isAllSequences(normalTiles, melds, pair)) matchedRules.push({ name: "All Sequences", fan: 1 });
+    if (isAllPongs(melds, pair)) matchedRules.push({ name: "All Pongs", fan: 3 });
+    if (isPureStraight(melds)) matchedRules.push({ name: "Pure Straight", fan: 3 });
+    if (isPureOrphans(normalTiles, melds, pair)) matchedRules.push({ name: "Pure Orphans", fan: 5 });
+    if (isMixedOrphans(normalTiles, melds, pair)) matchedRules.push({ name: "Mixed Orphans", fan: 3 });
+  }
+
+  // Rules that apply to BOTH standard hands and Seven Pairs hands
   if (isAllSimple(normalTiles)) matchedRules.push({ name: "All Simple", fan: 1 });
-  if (isPureStraight(melds)) matchedRules.push({ name: "Pure Straight", fan: 3 });
   if (isFullFlush(normalTiles)) matchedRules.push({ name: "Full Flush", fan: 7 });
   else if (isHalfFlush(normalTiles)) matchedRules.push({ name: "Half Flush", fan: 3 });
-  if (isSevenPairs(normalTiles)) matchedRules.push({ name: "Seven Pairs", fan: 4 });
-  if (isPureOrphans(normalTiles, melds, pair)) matchedRules.push({ name: "Pure Orphans", fan: 5 });
-  if (isMixedOrphans(normalTiles, melds, pair)) matchedRules.push({ name: "Mixed Orphans", fan: 3 });
-
+  
   // Stackable Checkbox Bonuses
   if (document.getElementById("ziMo")?.checked) matchedRules.push({ name: "Self-Drawn (Zi Mo)", fan: 1 });
   if (isConcealed) matchedRules.push({ name: "Concealed Hand", fan: 1 });
