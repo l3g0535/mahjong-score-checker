@@ -452,6 +452,12 @@ function getFlowerScoring(handTiles) {
   const presentSeasons = seasons.filter(t => handTiles.includes(t));
   const presentFlowers = flowers.filter(t => handTiles.includes(t));
 
+  // No Flowers Bonus (+1 fan)
+  if (presentSeasons.length === 0 && presentFlowers.length === 0) {
+    matchedFlowers.push({ name: "No Flowers", fan: 1 });
+    return matchedFlowers;
+  }
+
   // 1. Seasons scoring
   if (presentSeasons.length === 4) {
     matchedFlowers.push({ name: "All Seasons", fan: 2 });
@@ -469,7 +475,7 @@ function getFlowerScoring(handTiles) {
   return matchedFlowers;
 }
 
-// --- Main Scoring ---
+
 // --- Main Scoring ---
 function calculateScore() {
   const heavenlyEl = document.getElementById("heavenlyHand");
@@ -522,7 +528,7 @@ function calculateScore() {
   if (!isValidHand) {
     document.getElementById("score").textContent = "0";
     document.getElementById("rules").innerHTML = `
-      <span class="warning-text">Invalid hand structure (Must be 4 valid melds + 1 pair).</span>
+      <span class="warning-text">Invalid hand structure (Must be 4 valid melds + 1 pair or 7 pairs or 13 orphans).</span>
     `;
     return;
   }
@@ -579,13 +585,14 @@ function calculateScore() {
       matchedRules.push({ name: "Table Wind Pong", fan: 1 });
     }
   }
+
+  // Flowers & Seasons
+  matchedRules.push(...getFlowerScoring(hand));
+
   // Chicken Hand
   if (matchedRules.length === 0) {
     matchedRules.push({ name: "Chicken Hand", fan: 0 });
   }
-
-  // Flowers & Seasons
-  matchedRules.push(...getFlowerScoring(hand));
 
   const totalFan = Math.min(matchedRules.reduce((sum, r) => sum + r.fan, 0), MAX_POINTS);
   updateDisplay(totalFan, matchedRules);
