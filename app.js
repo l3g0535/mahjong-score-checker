@@ -195,76 +195,85 @@ function getCounts(tiles) {
 }
 
 // Sequential meld parser based on tile input order
+// Recursive meld parser using backtracking
 function parseHandIntoMelds(normalTiles) {
-  const melds = [];
-  let pair = null;
-  let i = 0;
+  const counts = getCounts(normalTiles);
+  const uniqueTiles = Object.keys(counts);
 
-  while (i < normalTiles.length) {
-    const remaining = normalTiles.length - i;
+  // Try each tile that has at least 2 copies as the hand's Pair
+  for (let pairTile of uniqueTiles) {
+    if (counts[pairTile] >= 2) {
+      const remainingCounts = { ...counts };
+      remainingCounts[pairTile] -= 2;
 
-    // 1. Kong (4 identical tiles)
-    if (remaining >= 4 &&
-        normalTiles[i] === normalTiles[i + 1] &&
-        normalTiles[i] === normalTiles[i + 2] &&
-        normalTiles[i] === normalTiles[i + 3]) {
-      melds.push({ type: 'kong', tiles: normalTiles.slice(i, i + 4) });
-      i += 4;
-      continue;
-    }
-
-    // 2. Pair (2 identical tiles)
-    if (!pair && remaining >= 2 && normalTiles[i] === normalTiles[i + 1]) {
-      const isTripsOrMore = remaining >= 3 && normalTiles[i] === normalTiles[i + 2];
-      if (!isTripsOrMore) {
-        pair = { type: 'pair', tiles: normalTiles.slice(i, i + 2) };
-        i += 2;
-        continue;
+      const melds = [];
+      if (backtrackMelds(remainingCounts, melds)) {
+        return {
+          melds,
+          pair: { type: 'pair', tiles: [pairTile, pairTile] }
+        };
       }
     }
-
-    // 3. 3-tile Meld (Pong or Chow)
-    if (remaining >= 3) {
-      const rawChunk = [normalTiles[i], normalTiles[i + 1], normalTiles[i + 2]];
-      const [t1, t2, t3] = rawChunk;
-
-      // Check for Pong / Triplet
-      if (t1 === t2 && t2 === t3) {
-        melds.push({ type: 'pong', tiles: rawChunk });
-      } else {
-        // Check for Chow with auto-sorting
-        const parsedChunk = rawChunk.map(parseTile);
-        const isSuited = ["characters", "circles", "bamboos"].includes(parsedChunk[0].suit);
-        const isSameSuit = parsedChunk.every(p => p.suit === parsedChunk[0].suit);
-
-        if (isSuited && isSameSuit) {
-          parsedChunk.sort((a, b) => a.value - b.value);
-
-          const [p1, p2, p3] = parsedChunk;
-          if (p1.value + 1 === p2.value && p2.value + 1 === p3.value) {
-            melds.push({ type: 'chow', tiles: parsedChunk.map(p => p.path) });
-          } else {
-            melds.push({ type: 'invalid', tiles: rawChunk });
-          }
-        } else {
-          melds.push({ type: 'invalid', tiles: rawChunk });
-        }
-      }
-      i += 3;
-      continue;
-    }
-
-    // Fallback pair check for 2 remaining tiles
-    if (!pair && remaining === 2 && normalTiles[i] === normalTiles[i + 1]) {
-      pair = { type: 'pair', tiles: normalTiles.slice(i, i + 2) };
-      i += 2;
-      continue;
-    }
-
-    i++;
   }
 
-  return { melds, pair };
+  return { melds: [], pair: null };
+}
+
+function backtrackMelds(counts, melds) {
+  // Find the first tile with remaining counts
+  const tile = Object.keys(counts).find(t => counts[t] > 0);
+  if (!tile) return true; // All tiles successfully partitioned into valid melds
+
+  const parsed = parseTile(tile);
+
+  // Option 1: Try forming a Kong (4 identical tiles)
+  if (counts[tile] >= 4) {
+    counts[tile] -= 4;
+    melds.push({ type: 'kong', tiles: [tile, tile, tile, tile] });
+
+    if (backtrackMelds(counts, melds)) return true;
+
+    // Backtrack if Kong didn't lead to a valid hand structure
+    melds.pop();
+    counts[tile] += 4;
+  }
+
+  // Option 2: Try forming a Chow (Sequence) if tile value <= 7
+  if (["characters", "circles", "bamboos"].includes(parsed.suit) && parsed.value <= 7) {
+    const suitArray = parsed.suit === 'characters' ? characters :
+                      parsed.suit === 'circles' ? circles : bamboos;
+    const tile2 = suitArray[parsed.value];     // Next tile value
+    const tile3 = suitArray[parsed.value + 1]; // Next+1 tile value
+
+    if ((counts[tile2] || 0) > 0 && (counts[tile3] || 0) > 0) {
+      counts[tile]--;
+      counts[tile2]--;
+      counts[tile3]--;
+      melds.push({ type: 'chow', tiles: [tile, tile2, tile3] });
+
+      if (backtrackMelds(counts, melds)) return true;
+
+      // Backtrack if sequence didn't yield a valid full hand
+      melds.pop();
+      counts[tile]++;
+      counts[tile2]++;
+      counts[tile3]++;
+    }
+  }
+
+  // Option 3: Try forming a Pong (Triplet)
+  if (counts[tile] >= 3) {
+    counts[tile] -= 3;
+    melds.push({ type: 'pong', tiles: [tile, tile, tile] });
+
+    if (backtrackMelds(counts, melds)) return true;
+
+    // Backtrack if triplet didn't yield a valid full hand
+    melds.pop();
+    counts[tile] += 3;
+  }
+
+  return false;
 }
 
 function isValidWinningHand(normalTiles, melds, pair) {
@@ -636,7 +645,7 @@ function clearHand() {
 
   if (scoreEl) scoreEl.textContent = "0";
   if (rulesEl) {
-    rulesEl.innerHTML = `<span class="info-text">You need 14 non-flower tiles for score calculation (Currently: 0/14).</span>`;
+    rulesEl.innerHTML = `<span class="info-text">You need at least 14 non-flower tiles for score calculation (Currently: 0/14).</span>`;
   }
   
   updateTileCount();
