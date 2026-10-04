@@ -60,8 +60,6 @@ let MAX_POINTS = 13;
 let currentSeatWind = "tiles/04-east-wind.svg";
 let currentTableWind = "tiles/04-east-wind.svg";
 
-// --- Event Listeners ---
-
 // --- DOM Element References ---
 const seatWindEl = document.getElementById("seatWind");
 const tableWindEl = document.getElementById("tableWind");
@@ -73,7 +71,7 @@ const robbingKongCb = document.getElementById('robbingKong');
 const replacementTileCb = document.getElementById('replacementTile');
 const instantFlowerWinCb = document.getElementById('instantFlowerWin');
 
-// --- Dynamic Wind Selectors Listener ---
+// --- Dynamic Wind Selectors Listeners ---
 if (seatWindEl) {
   seatWindEl.addEventListener("change", e => {
     currentSeatWind = e.target.value;
@@ -89,55 +87,50 @@ if (tableWindEl) {
 }
 
 // 1. When "Concealed Hand" is checked, "Zi Mo" MUST also be checked
-concealedHandCb.addEventListener('change', () => {
-  if (concealedHandCb.checked) {
-    ziMoCb.checked = true;
-  } else {
-    // If Concealed Hand is unchecked, Heavenly Hand can no longer be active
-    if (heavenlyHandCb) heavenlyHandCb.checked = false;
-  }
-  calculateScore(); // Trigger recalculation
-});
+if (concealedHandCb) {
+  concealedHandCb.addEventListener('change', () => {
+    if (concealedHandCb.checked) {
+      if (ziMoCb) ziMoCb.checked = true;
+    } else {
+      if (heavenlyHandCb) heavenlyHandCb.checked = false;
+    }
+    calculateScore();
+  });
+}
 
-// 2. "Zi Mo" can be true without Concealed Hand, but unchecking Zi Mo unchecks Concealed Hand & Heavenly Hand
-ziMoCb.addEventListener('change', () => {
-  if (!ziMoCb.checked) {
-    concealedHandCb.checked = false;
-    if (heavenlyHandCb) heavenlyHandCb.checked = false;
-  }
-  calculateScore(); // Trigger recalculation
-});
+// 2. Unchecking Zi Mo unchecks Concealed Hand & Heavenly Hand
+if (ziMoCb) {
+  ziMoCb.addEventListener('change', () => {
+    if (!ziMoCb.checked) {
+      if (concealedHandCb) concealedHandCb.checked = false;
+      if (heavenlyHandCb) heavenlyHandCb.checked = false;
+    }
+    calculateScore();
+  });
+}
 
 // 3. When "Heavenly Hand" is checked, BOTH Concealed Hand and Zi Mo must be checked
 if (heavenlyHandCb) {
   heavenlyHandCb.addEventListener('change', () => {
     if (heavenlyHandCb.checked) {
-      concealedHandCb.checked = true;
-      ziMoCb.checked = true;
+      if (concealedHandCb) concealedHandCb.checked = true;
+      if (ziMoCb) ziMoCb.checked = true;
     }
-    calculateScore(); // Trigger recalculation
+    calculateScore();
   });
 }
-document.getElementById("seatWind")?.addEventListener("change", e => {
-  currentSeatWind = e.target.value;
-  calculateScore();
-});
 
-document.getElementById("tableWind")?.addEventListener("change", e => {
-  currentTableWind = e.target.value;
-  calculateScore();
-});
 // All Checkboxes Event Binding
 const allCheckboxes = [
   "ziMo", "concealedHand", "robbingKong", 
   "replacementTile", "instantFlowerWin",
   "heavenlyHand", "earthlyHand"
 ];
+
 allCheckboxes.forEach(id => {
   const el = document.getElementById(id);
   if (el) {
     el.addEventListener("change", () => {
-      // Mutual exclusivity between Heavenly and Earthly Hands
       if (id === "heavenlyHand" && el.checked) {
         const earthly = document.getElementById("earthlyHand");
         if (earthly) earthly.checked = false;
@@ -149,11 +142,6 @@ allCheckboxes.forEach(id => {
       calculateScore();
     });
   }
-});
-
-// --- Event Listener for Instant 8-Flower Win Checkbox ---
-document.getElementById("instantFlowerWin")?.addEventListener("change", () => {
-  calculateScore();
 });
 
 // --- Helper Functions ---
@@ -194,21 +182,28 @@ function getCounts(tiles) {
   return counts;
 }
 
-// Tile-count constrained recursive meld parser
+// --- Recursive Meld Parser with Tile-Count Constrained Backtracking ---
 function parseHandIntoMelds(normalTiles) {
-  const totalTiles = normalTiles.length;
-  
-  // Mahjong rule: 14 tiles = 0 Kongs, 15 tiles = 1 Kong, ..., 18 tiles = 4 Kongs
+  // Safe sort across suited and honor tiles
+  const sortedTiles = [...normalTiles].sort((a, b) => {
+    const pa = parseTile(a), pb = parseTile(b);
+    if (pa.suit !== pb.suit) return pa.suit.localeCompare(pb.suit);
+    if (typeof pa.value === 'number' && typeof pb.value === 'number') {
+      return pa.value - pb.value;
+    }
+    return String(pa.value).localeCompare(String(pb.value));
+  });
+
+  const totalTiles = sortedTiles.length;
   const expectedKongs = totalTiles - 14;
 
   if (expectedKongs < 0 || expectedKongs > 4) {
     return { melds: [], pair: null };
   }
 
-  const counts = getCounts(normalTiles);
+  const counts = getCounts(sortedTiles);
   const uniqueTiles = Object.keys(counts);
 
-  // Try each tile with at least 2 copies as the hand's Pair
   for (let pairTile of uniqueTiles) {
     if (counts[pairTile] >= 2) {
       const remainingCounts = { ...counts };
@@ -228,34 +223,31 @@ function parseHandIntoMelds(normalTiles) {
 }
 
 function backtrackMelds(counts, melds, targetKongs, currentKongs) {
-  // Find first remaining tile
   const tile = Object.keys(counts).find(t => counts[t] > 0);
-  
-  // Base Case: All tiles consumed. Verify exact required Kong count and 4 total melds
+
   if (!tile) {
     return currentKongs === targetKongs && melds.length === 4;
   }
 
   const parsed = parseTile(tile);
 
-  // Option 1: Try forming a Kong ONLY if hand size allows extra Kongs
+  // Option 1: Try forming a Kong ONLY if total hand size allows extra Kongs
   if (currentKongs < targetKongs && counts[tile] >= 4) {
     counts[tile] -= 4;
     melds.push({ type: 'kong', tiles: [tile, tile, tile, tile] });
 
     if (backtrackMelds(counts, melds, targetKongs, currentKongs + 1)) return true;
 
-    // Backtrack
     melds.pop();
     counts[tile] += 4;
   }
 
-  // Option 2: Try forming a Chow (Sequence) if tile value <= 7
+  // Option 2: Try forming a Chow (Sequence)
   if (["characters", "circles", "bamboos"].includes(parsed.suit) && parsed.value <= 7) {
     const suitArray = parsed.suit === 'characters' ? characters :
                       parsed.suit === 'circles' ? circles : bamboos;
-    const tile2 = suitArray[parsed.value];     // Next tile value
-    const tile3 = suitArray[parsed.value + 1]; // Next+1 tile value
+    const tile2 = suitArray[parsed.value];
+    const tile3 = suitArray[parsed.value + 1];
 
     if ((counts[tile2] || 0) > 0 && (counts[tile3] || 0) > 0) {
       counts[tile]--;
@@ -265,7 +257,6 @@ function backtrackMelds(counts, melds, targetKongs, currentKongs) {
 
       if (backtrackMelds(counts, melds, targetKongs, currentKongs)) return true;
 
-      // Backtrack
       melds.pop();
       counts[tile]++;
       counts[tile2]++;
@@ -280,13 +271,13 @@ function backtrackMelds(counts, melds, targetKongs, currentKongs) {
 
     if (backtrackMelds(counts, melds, targetKongs, currentKongs)) return true;
 
-    // Backtrack
     melds.pop();
     counts[tile] += 3;
   }
 
   return false;
 }
+
 function isValidWinningHand(normalTiles, melds, pair) {
   // 1. Check special structures
   if (isThirteenOrphans(normalTiles) || isSevenPairs(normalTiles) || isNineGates(normalTiles)) {
@@ -352,7 +343,6 @@ function isHalfFlush(normalTiles) {
 function isSevenPairs(normalTiles) {
   if (normalTiles.length !== 14) return false;
   const counts = Object.values(getCounts(normalTiles));
-  // Allows counts of 2 (1 pair) or 4 (2 pairs), as long as total tiles equals 14
   return counts.every(c => c === 2 || c === 4);
 }
 
@@ -393,7 +383,7 @@ function isBigFourWinds(melds) {
 }
 
 function isAllHonors(normalTiles) {
-  return normalTiles.length === 14 && normalTiles.every(isHonor);
+  return normalTiles.length >= 14 && normalTiles.every(isHonor);
 }
 
 function isThirteenOrphans(normalTiles) {
@@ -409,7 +399,7 @@ function isThirteenOrphans(normalTiles) {
 }
 
 function isAllTerminals(normalTiles, melds, pair) {
-  return normalTiles.length === 14 && normalTiles.every(isTerminal) && isAllPongs(melds, pair);
+  return normalTiles.length >= 14 && normalTiles.every(isTerminal) && isAllPongs(melds, pair);
 }
 
 function isNineGates(normalTiles) {
@@ -451,6 +441,7 @@ function getDragonPongs(normalTiles) {
   });
   return results;
 }
+
 function getSeatWindNumber() {
   switch (currentSeatWind) {
     case 'tiles/04-east-wind.svg':  return 1;
@@ -494,7 +485,6 @@ function getFlowerScoring(handTiles) {
 
   return matchedFlowers;
 }
-
 
 // --- Main Scoring ---
 function calculateScore() {
@@ -579,7 +569,6 @@ function calculateScore() {
   if (isSevenPairsHand) {
     matchedRules.push({ name: "Seven Pairs", fan: 4 });
   } else {
-    // Meld-based rules ONLY apply if NOT Seven Pairs
     if (isSmallThreeDragons(melds, pair)) matchedRules.push({ name: "Small Three Dragons", fan: 5 });
     if (isAllSequences(normalTiles, melds, pair)) matchedRules.push({ name: "All Sequences", fan: 1 });
     if (isAllPongs(melds, pair)) matchedRules.push({ name: "All Pongs", fan: 3 });
@@ -588,11 +577,10 @@ function calculateScore() {
     if (isMixedOrphans(normalTiles, melds, pair)) matchedRules.push({ name: "Mixed Orphans", fan: 3 });
   }
 
-  // Rules that apply to BOTH standard hands and Seven Pairs hands
   if (isAllSimple(normalTiles)) matchedRules.push({ name: "All Simple", fan: 1 });
   if (isFullFlush(normalTiles)) matchedRules.push({ name: "Full Flush", fan: 7 });
   else if (isHalfFlush(normalTiles)) matchedRules.push({ name: "Half Flush", fan: 3 });
-  
+
   // Stackable Checkbox Bonuses
   if (document.getElementById("ziMo")?.checked) matchedRules.push({ name: "Self-Drawn (Zi Mo)", fan: 1 });
   if (isConcealed) matchedRules.push({ name: "Concealed Hand", fan: 1 });
@@ -642,7 +630,6 @@ function updateDisplay(totalFan, matchedRules) {
 }
 
 // --- Hand Management ---
-
 function clearHand() {
   hand = [];
   
@@ -662,7 +649,7 @@ function clearHand() {
 
   if (scoreEl) scoreEl.textContent = "0";
   if (rulesEl) {
-    rulesEl.innerHTML = `<span class="info-text">You need at least 14 non-flower tiles for score calculation (Currently: 0/14).</span>`;
+    rulesEl.innerHTML = `<span class="info-text">You need 14 non-flower tiles for score calculation (Currently: 0/14).</span>`;
   }
   
   updateTileCount();
