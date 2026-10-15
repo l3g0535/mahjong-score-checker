@@ -86,29 +86,6 @@ if (tableWindEl) {
   });
 }
 
-// 1. When "Concealed Hand" is checked, "Zi Mo" MUST also be checked
-if (concealedHandCb) {
-  concealedHandCb.addEventListener('change', () => {
-    if (concealedHandCb.checked) {
-      if (ziMoCb) ziMoCb.checked = true;
-    } else {
-      if (heavenlyHandCb) heavenlyHandCb.checked = false;
-    }
-    calculateScore();
-  });
-}
-
-// 2. Unchecking Zi Mo unchecks Concealed Hand & Heavenly Hand
-if (ziMoCb) {
-  ziMoCb.addEventListener('change', () => {
-    if (!ziMoCb.checked) {
-      if (concealedHandCb) concealedHandCb.checked = false;
-      if (heavenlyHandCb) heavenlyHandCb.checked = false;
-    }
-    calculateScore();
-  });
-}
-
 // 3. When "Heavenly Hand" is checked, BOTH Concealed Hand and Zi Mo must be checked
 if (heavenlyHandCb) {
   heavenlyHandCb.addEventListener('change', () => {
@@ -726,6 +703,7 @@ if (slider && sliderValue) {
 }
 
 document.getElementById("clearBtn")?.addEventListener("click", clearHand);
+
 
 // Initialize board
 renderRow("honors", honors);
