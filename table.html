@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>My Table | Score Checker</title>
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="mylogo.png">
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+  <main class="display">
+    <header class="app-header">
+      <div class="header-brand">
+        <img src="mylogo.png" alt="Logo" class="app-logo">
+        <h1>Score Checker</h1>
+      </div>
+      <a href="calculator.html" id="calculatorLink" class="admin-nav-chip"
+        title="Open the points calculator">Calculator</a>
+      <div class="header-auth" id="authHeaderBar">
+        <div id="guestAuthActions" class="auth-actions">
+          <button type="button" id="openAuthModalBtn" class="auth-header-btn">Log In / Sign Up</button>
+        </div>
+        <div id="userAuthActions" class="auth-actions hidden">
+          <a href="admin.html" id="headerAdminLink" class="admin-nav-chip hidden"
+            title="Open Admin Lobby & Review Dashboard">Admin</a>
+          <a href="profile.html" id="headerProfileLink" class="profile-chip" title="View Personal Profile">
+            <img id="headerAvatar" src="tiles/01-white-dragon.svg" alt="Avatar" class="header-avatar">
+            <span id="headerDisplayName">Player</span>
+          </a>
+          <button type="button" id="headerLogoutBtn" class="auth-logout-btn">Log Out</button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Table / Game Session & Win Logging Panel -->
+    <section id="tableSessionCard" class="table-session-card">
+      <div class="table-session-header">
+        <div>
+          <span id="lobbyStatusBadge" class="lobby-badge">No Active Lobby</span>
+          <h2 id="tableSessionTitle" class="table-session-title">Table Session</h2>
+        </div>
+        <div class="table-header-actions">
+          <button type="button" id="refreshTableBtn" class="secondary-btn small-btn"
+            title="Refresh table state">Refresh</button>
+          <button type="button" id="leaveTableBtn" class="auth-logout-btn hidden">Leave Table</button>
+        </div>
+      </div>
+
+      <p id="tableSessionHint" class="field-hint">
+        Scan your winning hand to log points for your table.
+      </p>
+
+
+      <!-- 4 Seats Grid -->
+      <div id="tableSeatsGrid" class="table-seats-grid hidden"></div>
+
+      <!-- Camera Scan & Win Logging Controls -->
+      <div class="win-logging-box">
+        <div class="win-review-checkbox-row">
+          <label class="checkbox-label review-checkbox-label" for="sendToAdminReviewCb">
+            <input type="checkbox" id="sendToAdminReviewCb">
+            <span>Send to Admin for Review</span>
+          </label>
+        </div>
+
+        <div class="camera-scan-row">
+          <button type="button" id="openCameraBtn" class="camera-trigger-btn">📷 Scan Winning Hand with Camera</button>
+          <input type="file" id="nativeCameraInput" accept="image/*" capture="environment" class="hidden">
+        </div>
+
+        <div id="scanStatusRow" class="scan-status-row">
+          <span id="scanStatusBadge" class="scan-badge scan-badge-pending">Not scanned yet — camera scan required to log
+            a table win</span>
+          <img id="scannedPhotoThumb" class="scanned-photo-thumb hidden" alt="Scanned hand preview">
+        </div>
+
+        <div id="winPayoutControls" class="win-payout-controls hidden">
+          <div id="discarderPickerGroup" class="setting-group">
+            <label for="discarderSelect">Discarder (Who dealt into this hand?):</label>
+            <select id="discarderSelect">
+              <option value="">-- Select opponent who discarded --</option>
+            </select>
+          </div>
+
+          <div id="payoutPreviewBox" class="payout-preview-box"></div>
+
+          <button type="button" id="logWinBtn" class="primary-btn full-width-btn" disabled>Log Winning Hand</button>
+        </div>
+
+        <div id="tableWinFeedback" class="form-feedback hidden"></div>
+      </div>
+    </section>
+
+    <!-- Top Container: Side-by-Side Squares -->
+    <div class="sticky-hand-container">
+      <div class="score-card">
+        <!-- Left Square: Clean Big Score -->
+        <div class="score-box">
+          <span class="score-label">SCORE</span>
+          <h2 id="score">0</h2>
+        </div>
+
+        <!-- Right Square: Matched Rules & Status Messages -->
+        <div id="rulesContainer" class="rules-box">
+          <div id="rules">
+            <span class="info-text">You need 14 non-flower tiles for score calculation (Currently: 0/14).</span>
+          </div>
+        </div>
+      </div>
+      <!-- Sticky Wrapper for Hand & Controls -->
+
+      <!-- Hand Display Area -->
+      <div id="hand" class="hand-box"></div>
+
+      <!-- Hand Actions Row (Tile counter far left, Clear button far right) -->
+      <div class="hand-actions">
+        <span id="tileCount">Tiles: 0</span>
+        <button id="clearBtn" class="clear-btn">Clear Hand</button>
+      </div>
+
+    </div>
+
+    <button type="button" id="editHandBtn" class="secondary-btn full-width-btn hidden">Edit wrongly scanned
+      tiles</button>
+
+    <div id="editHandSection" class="hidden">
+      <!-- Wind Selectors & Settings -->
+      <section class="settings-panel">
+        <div class="setting-group">
+          <label for="seatWind">Seat Wind:</label>
+          <select id="seatWind">
+            <option value="tiles/04-east-wind.svg">East (東)</option>
+            <option value="tiles/05-south-wind.svg">South (南)</option>
+            <option value="tiles/06-west-wind.svg">West (西)</option>
+            <option value="tiles/07-north-wind.svg">North (北)</option>
+          </select>
+        </div>
+
+        <div class="setting-group">
+          <label for="tableWind">Table Wind:</label>
+          <select id="tableWind">
+            <option value="tiles/04-east-wind.svg">East (東)</option>
+            <option value="tiles/05-south-wind.svg">South (南)</option>
+            <option value="tiles/06-west-wind.svg">West (西)</option>
+            <option value="tiles/07-north-wind.svg">North (北)</option>
+          </select>
+        </div>
+
+        <div class="setting-group slider-group">
+          <label for="maxPoints">Max Fan Cap: <output id="maxPointsValue" for="maxPoints">13</output></label>
+          <input type="range" id="maxPoints" min="13" max="18" value="13" step="1">
+        </div>
+
+        <div class="checkbox-group">
+          <label class="checkbox-label"><input type="checkbox" id="ziMo"> Self-Drawn </label>
+          <label class="checkbox-label"><input type="checkbox" id="concealedHand"> Concealed Hand</label>
+          <label class="checkbox-label"><input type="checkbox" id="robbingKong"> Robbing Kong</label>
+          <label class="checkbox-label"><input type="checkbox" id="replacementTile"> Replacement Tile</label>
+          <label class="checkbox-label"><input type="checkbox" id="instantFlowerWin"> 8-Flower Win</label>
+          <label class="checkbox-label"><input type="checkbox" id="heavenlyHand" disabled> Heavenly Hand</label>
+          <label class="checkbox-label"><input type="checkbox" id="earthlyHand" disabled> Earthly Hand</label>
+        </div>
+      </section>
+
+      <!-- Tile Keyboard Input -->
+      <section class="keyboard">
+        <h2>Honors (字牌)</h2>
+        <div class="tile-row-wrapper">
+          <div class="tile-row" id="honors"></div>
+        </div>
+
+        <h2>Characters (萬子)</h2>
+        <div class="tile-row-wrapper">
+          <div class="tile-row" id="characters"></div>
+        </div>
+
+        <h2>Circles (筒子)</h2>
+        <div class="tile-row-wrapper">
+          <div class="tile-row" id="circles"></div>
+        </div>
+
+        <h2>Bamboos (索子)</h2>
+        <div class="tile-row-wrapper">
+          <div class="tile-row" id="bamboos"></div>
+        </div>
+
+        <h2>Flowers & Seasons (花牌)</h2>
+        <div class="tile-row-wrapper">
+          <div class="tile-row" id="flowersandseasons"></div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <!-- Authentication Modal -->
+  <div id="authModal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="authModalTitle">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h2 id="authModalTitle">Log In</h2>
+        <button type="button" id="closeAuthModalBtn" class="modal-close-btn" aria-label="Close">&times;</button>
+      </div>
+
+      <div class="auth-tabs">
+        <button type="button" id="tabLoginBtn" class="auth-tab active">Log In</button>
+        <button type="button" id="tabSignupBtn" class="auth-tab">Sign Up</button>
+      </div>
+
+      <form id="authForm" class="auth-form">
+        <div class="form-field">
+          <label for="authUsername">Username</label>
+          <input type="text" id="authUsername" name="username" autocomplete="username"
+            placeholder="At least 3 characters" required>
+        </div>
+
+        <div class="form-field">
+          <label for="authPassword">Password</label>
+          <input type="password" id="authPassword" name="password" autocomplete="current-password"
+            placeholder="At least 6 characters" required>
+        </div>
+
+        <div id="authErrorMsg" class="form-feedback error-feedback hidden"></div>
+
+        <button type="submit" id="authSubmitBtn" class="primary-btn full-width-btn">Log In</button>
+      </form>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+  <script src="ai.js"></script>
+  <script src="auth.js"></script>
+  <script src="table.js"></script>
+</body>
+
+</html>

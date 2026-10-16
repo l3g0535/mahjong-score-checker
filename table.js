@@ -66,6 +66,23 @@ function resetHandScanState() {
   updateWinPayoutUI();
 }
 
+const IS_LOBBY_PAGE = Boolean(document.getElementById("availableTablesList"));
+const IS_TABLE_PAGE = Boolean(document.getElementById("tableSeatsGrid"));
+
+// index.html = table sessions (lobby), table.html = inside a table session.
+function routeBySeat() {
+  const seated = Boolean(getMyTableObj());
+  if (IS_LOBBY_PAGE && seated) {
+    window.location.replace("table.html");
+    return true;
+  }
+  if (IS_TABLE_PAGE && !seated) {
+    window.location.replace("index.html");
+    return true;
+  }
+  return false;
+}
+
 function getMyTableObj() {
   if (!activeLobbyState || !mySeatState) return null;
   const tables = activeLobbyState.tables || [];
@@ -327,6 +344,7 @@ async function fetchActiveLobbyState() {
     activeLobbyState = data.lobby || null;
     mySeatState = data.my_seat || null;
     renderTableSessionCard();
+    if (routeBySeat()) return;
     await maybeAutoJoinTableFromUrl();
   } catch (err) {
     console.error("Failed to fetch active lobby:", err);
@@ -373,6 +391,7 @@ async function joinTableByNumber(tableNumber) {
     mySeatState = data.my_seat || null;
     renderTableSessionCard();
     showTableFeedback(`Joined Table ${tableNumber}!`, false);
+    routeBySeat();
   } catch (err) {
     showTableFeedback("Could not connect to server to join table.", true);
   }
@@ -400,6 +419,7 @@ async function handleLeaveTable() {
     }
     renderTableSessionCard();
     showTableFeedback("You have left the table.", false);
+    routeBySeat();
   } catch (err) {
     showTableFeedback("Could not connect to server.", true);
   }
