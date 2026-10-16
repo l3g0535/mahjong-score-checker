@@ -137,14 +137,42 @@ function renderAvailableTables() {
     count.className = "available-table-count";
     count.textContent = isFull ? "Full — 4 of 4 seats taken" : `${seated} of 4 seats taken`;
 
-    const btn = document.createElement("button");
-    btn.type = "button";
-    btn.className = "primary-btn small-btn";
-    btn.textContent = isFull ? "Full" : loggedIn ? "Join" : "Log in to join";
-    btn.disabled = isFull || !loggedIn;
-    btn.addEventListener("click", () => joinTableByNumber(t.table_number));
+    const roster = document.createElement("ul");
+    roster.className = "table-roster hidden";
+    for (let i = 1; i <= 4; i++) {
+      const occupant = seats.find(s => s.seat_index === i);
+      const li = document.createElement("li");
+      li.textContent = occupant
+        ? `Seat ${i}: ${occupant.display_name || occupant.username || "Player"}`
+        : `Seat ${i}: Empty`;
+      roster.appendChild(li);
+    }
 
-    card.append(visual, title, count, btn);
+    const actions = document.createElement("div");
+    actions.className = "available-table-actions";
+
+    const viewBtn = document.createElement("button");
+    viewBtn.type = "button";
+    viewBtn.className = "primary-btn small-btn";
+    viewBtn.textContent = "View";
+    viewBtn.addEventListener("click", () => {
+      const open = roster.classList.toggle("hidden") === false;
+      viewBtn.textContent = open ? "Hide" : "View";
+    });
+    actions.appendChild(viewBtn);
+
+    // Players join only by scanning the table's QR/NFC tag; admins may also join here.
+    if (window.currentSessionUser?.is_admin) {
+      const joinBtn = document.createElement("button");
+      joinBtn.type = "button";
+      joinBtn.className = "secondary-btn small-btn";
+      joinBtn.textContent = isFull ? "Full" : "Join";
+      joinBtn.disabled = isFull;
+      joinBtn.addEventListener("click", () => joinTableByNumber(t.table_number));
+      actions.appendChild(joinBtn);
+    }
+
+    card.append(visual, title, count, actions, roster);
     listEl.appendChild(card);
   });
 }
@@ -448,13 +476,14 @@ async function maybeAutoJoinTableFromUrl() {
   }
   autoJoinAttemptedForTable = `${window.currentSessionUser.id}:${tableNum}`;
 
-  await joinTableByNumber(tableNum);
+  await joinTableByNumber(tableNum, "tag");
 }
 
-async function joinTableByNumber(tableNumber) {
+async function joinTableByNumber(tableNumber, source = "") {
   hideTableFeedback();
   try {
-    const res = await fetch(`/api/tables/${tableNumber}/join`, {
+    const qs = source ? `?source=${encodeURIComponent(source)}` : "";
+    const res = await fetch(`/api/tables/${tableNumber}/join${qs}`, {
       method: "POST",
       credentials: "same-origin"
     });

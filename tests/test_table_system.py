@@ -74,17 +74,17 @@ def test_table_joining_4_seat_cap_and_leaving(app_env):
     p5 = make_user_client(app_env, "player5")
 
     for idx, client in enumerate([p1, p2, p3, p4], start=1):
-        res = client.post("/api/tables/1/join")
+        res = client.post("/api/tables/1/join?source=tag")
         assert res.status_code == 200
         assert res.json()["my_seat"]["table_number"] == 1
         assert res.json()["my_seat"]["seat_index"] == idx
 
     # 5th player cannot join full Table 1
-    full_res = p5.post("/api/tables/1/join")
+    full_res = p5.post("/api/tables/1/join?source=tag")
     assert full_res.status_code == 409
 
     # Player 1 cannot join Table 2 while still seated at Table 1
-    switch_res = p1.post("/api/tables/2/join")
+    switch_res = p1.post("/api/tables/2/join?source=tag")
     assert switch_res.status_code == 400
 
     # Player 2 leaves Table 1, freeing Seat 2 for Player 5
@@ -92,7 +92,7 @@ def test_table_joining_4_seat_cap_and_leaving(app_env):
     assert leave_res.status_code == 200
     assert leave_res.json()["my_seat"] is None
 
-    join_p5 = p5.post("/api/tables/1/join")
+    join_p5 = p5.post("/api/tables/1/join?source=tag")
     assert join_p5.status_code == 200
     assert join_p5.json()["my_seat"]["seat_index"] == 2
 
@@ -106,7 +106,7 @@ def test_immediate_win_logging_zimo_and_discard_payouts(app_env):
 
     # Seat first 3 players — win logging must fail until 4th seat is filled
     for c in clients[:3]:
-        assert c.post("/api/tables/1/join").status_code == 200
+        assert c.post("/api/tables/1/join?source=tag").status_code == 200
 
     not_full_win = clients[0].post(
         "/api/tables/1/wins",
@@ -121,7 +121,7 @@ def test_immediate_win_logging_zimo_and_discard_payouts(app_env):
     assert "4 seats" in not_full_win.json()["detail"]
 
     # Seat 4th player
-    assert clients[3].post("/api/tables/1/join").status_code == 200
+    assert clients[3].post("/api/tables/1/join?source=tag").status_code == 200
 
     # Reject win if not scanned by camera
     unscanned_win = clients[0].post(
@@ -196,7 +196,7 @@ def test_granular_admin_review_checkbox_workflow(app_env):
     clients = [make_user_client(app_env, f"finalist{i}") for i in range(1, 5)]
     user_ids = [c.get("/api/me").json()["id"] for c in clients]
     for c in clients:
-        assert c.post("/api/tables/1/join").status_code == 200
+        assert c.post("/api/tables/1/join?source=tag").status_code == 200
 
     # Finalist 1 submits a 5-Fan discard win off Finalist 2 WITH require_admin_review=True
     pending_res = clients[0].post(
@@ -254,9 +254,9 @@ def test_lobby_leaderboard_ordering_and_persistence_across_tables(app_env):
     t2_ids = [c.get("/api/me").json()["id"] for c in t2_clients]
 
     for c in t1_clients:
-        assert c.post("/api/tables/1/join").status_code == 200
+        assert c.post("/api/tables/1/join?source=tag").status_code == 200
     for c in t2_clients:
-        assert c.post("/api/tables/2/join").status_code == 200
+        assert c.post("/api/tables/2/join?source=tag").status_code == 200
 
     # Table 1: alpha1 wins 8-Fan Zi Mo (+24 for alpha1; -8 for alpha2, alpha3, alpha4)
     assert (
@@ -340,6 +340,16 @@ def test_lobby_leaderboard_ordering_and_persistence_across_tables(app_env):
     assert lb_after_leave[0]["lobby_points"] == 24
     assert lb_after_leave[0]["current_table"] is None
 
-    rejoin_res = t1_clients[0].post("/api/tables/1/join")
+    rejoin_res = t1_clients[0].post("/api/tables/1/join?source=tag")
     assert rejoin_res.status_code == 200
     assert rejoin_res.json()["my_seat"]["session_points"] == 24
+
+
+def test_join_requires_tag_scan_except_admin(app_env):
+    admin = make_user_client(app_env, "admin")
+    admin.post("/api/admin/lobby", json={"name": "Tag Night", "num_tables": 2})
+    player = make_user_client(app_env, "player1")
+
+    assert player.post("/api/tables/1/join").status_code == 403
+    assert player.post("/api/tables/1/join?source=tag").status_code == 200
+    assert admin.post("/api/tables/2/join").status_code == 200

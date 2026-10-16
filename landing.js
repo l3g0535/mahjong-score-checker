@@ -6,13 +6,17 @@
   }
 })();
 
-// Preview switch: ?v=a (default) or ?v=b
-(function applyVariant() {
-  const v = new URLSearchParams(window.location.search).get("v") === "b" ? "b" : "a";
-  document.documentElement.dataset.variant = v;
-  const link = document.getElementById("landingTheme");
-  if (link) link.setAttribute("href", `landing-${v}.css`);
-})();
+const FALLBACK_HAND = {
+  tiles: [
+    "08-characters-1", "16-characters-9", "17-circles-1", "25-circles-9", "26-bamboos-1",
+    "34-bamboos-9", "04-east-wind", "05-south-wind", "06-west-wind", "07-north-wind",
+    "01-white-dragon", "02-green-dragon", "03-red-dragon", "03-red-dragon"
+  ].map((n) => `tiles/${n}.svg`),
+  hand_name: "Thirteen Orphans",
+  fan_score: 13,
+  display_name: "a player",
+  avatar_url: "tiles/01-white-dragon.svg"
+};
 
 const HERO_TILES = [
   "01-white-dragon", "02-green-dragon", "03-red-dragon", "04-east-wind", "05-south-wind",
@@ -37,15 +41,45 @@ function buildHeroTiles() {
   });
 }
 
+function renderTopHand(hand) {
+  const wrap = document.getElementById("topHandTiles");
+  if (!wrap || !hand || !hand.tiles?.length) return;
+  wrap.innerHTML = "";
+  hand.tiles.forEach((src, i) => {
+    const img = document.createElement("img");
+    img.src = src;
+    img.alt = "";
+    img.className = "l-hand-tile";
+    img.style.animationDelay = `${0.35 + i * 0.07}s`;
+    wrap.appendChild(img);
+  });
+  document.getElementById("topHandFan").textContent = `${hand.fan_score} fan`;
+  document.getElementById("topHandName").textContent = hand.display_name;
+  document.getElementById("topHandTitle").textContent = hand.hand_name || "";
+  const av = document.getElementById("topHandAvatar");
+  if (av && hand.avatar_url) av.src = hand.avatar_url;
+}
+
+async function loadTopHand() {
+  try {
+    const res = await fetch("/api/public/top-hand");
+    const data = res.ok ? await res.json() : null;
+    renderTopHand(data?.top_hand || FALLBACK_HAND);
+  } catch (err) {
+    renderTopHand(FALLBACK_HAND);
+  }
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   buildHeroTiles();
+  loadTopHand();
   const year = document.getElementById("year");
   if (year) year.textContent = new Date().getFullYear();
 
   const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   const nav = document.getElementById("landingNav");
-  const tiles = document.getElementById("heroTiles");
   const hero = document.getElementById("hero");
+  const tiles = document.getElementById("heroTiles");
 
   window.addEventListener("scroll", () => {
     const y = window.scrollY;

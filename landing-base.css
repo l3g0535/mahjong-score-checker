@@ -110,3 +110,67 @@ h1, h2, h3, .l-brand { font-family: 'Outfit', sans-serif; }
   * { animation: none !important; transition: none !important; }
   .reveal { opacity: 1; transform: none; }
 }
+
+/* Hero showcase: highest-scoring logged hand */
+.l-hero-inner { max-width: 960px; }
+.l-hero { padding-bottom: 110px; }
+.l-showcase {
+  margin: 48px auto 0; padding: 22px clamp(14px, 3vw, 28px); border-radius: 24px;
+  background: var(--l-card-bg); border: 1px solid var(--l-border); box-shadow: var(--l-card-shadow);
+  animation: l-rise 1s .25s ease-out both;
+}
+.l-showcase-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+.l-showcase-badge { font-family: 'Outfit', sans-serif; font-weight: 700; letter-spacing: .04em; }
+.l-showcase-fan {
+  padding: 4px 14px; border-radius: 999px; font-weight: 700; color: #fff; background: var(--l-accent);
+}
+.l-hand { display: flex; justify-content: center; flex-wrap: wrap; gap: clamp(2px, .6vw, 6px); min-height: 72px; }
+.l-hand-tile {
+  width: clamp(30px, 5.6vw, 58px); filter: drop-shadow(0 6px 8px rgba(38, 63, 54, .22));
+  opacity: 0; animation: l-drop .6s ease-out forwards;
+}
+@keyframes l-drop { from { opacity: 0; transform: translateY(-26px) rotate(-6deg); } to { opacity: 1; transform: none; } }
+.l-hand-tile:hover { transform: translateY(-8px); transition: transform .2s; }
+.l-showcase-by { display: flex; justify-content: center; align-items: center; gap: 10px; margin-top: 18px; color: var(--l-muted); font-size: .95rem; }
+.l-showcase-avatar { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; background: #fff; border: 1px solid var(--l-border); }
+@media (prefers-reduced-motion: reduce) { .l-hand-tile { opacity: 1; } }
+
+/* Emphasised centred Hall of Fame */
+.l-hero-inner { max-width: 1040px; display: flex; flex-direction: column; align-items: center; }
+.l-showcase {
+  width: 100%; margin: 28px 0 40px; padding: clamp(24px, 4vw, 44px) clamp(16px, 4vw, 44px);
+  border: 2px solid #C4A66A; border-radius: 30px; position: relative;
+  box-shadow: 0 30px 80px rgba(38, 63, 54, .22), 0 0 0 8px rgba(196, 166, 106, .16), 0 0 60px rgba(196, 166, 106, .35);
+}
+.l-showcase-badge { font-size: clamp(1.2rem, 2.8vw, 1.8rem); }
+.l-showcase-fan { font-size: clamp(1rem, 2.2vw, 1.4rem); padding: 6px 20px; }
+.l-hand { min-height: 100px; gap: clamp(3px, .8vw, 10px); }
+.l-hand-tile { width: clamp(34px, 6.4vw, 78px); }
+.l-showcase-by { font-size: 1.05rem; margin-top: 26px; }
+.l-showcase-avatar { width: 36px; height: 36px; }
+.l-hero-inner .l-cta { margin-top: 0; }
+
+/* Player-first Hall of Fame: avatar + name > hand name > tiles */
+.l-showcase { display: flex; flex-direction: column; align-items: center; text-align: center; }
+.l-showcase-head { width: 100%; opacity: .85; margin-bottom: 8px; }
+.l-showcase-badge { font-size: .95rem; }
+.l-showcase-fan { font-size: .95rem; padding: 4px 14px; }
+.l-showcase-avatar {
+  width: clamp(96px, 16vw, 148px); height: clamp(96px, 16vw, 148px); border: 4px solid #C4A66A;
+  box-shadow: 0 10px 30px rgba(38, 63, 54, .25); margin: 8px 0 14px; padding: 6px; background: #fff;
+}
+.l-showcase-name {
+  font-family: 'Outfit', sans-serif; font-weight: 800; letter-spacing: -.02em; line-height: 1.05;
+  font-size: clamp(2.6rem, 8vw, 5rem); background: var(--l-grad); -webkit-background-clip: text;
+  background-clip: text; color: transparent;
+}
+.l-showcase-handname {
+  margin: 10px 0 26px; font-family: 'Outfit', sans-serif; font-weight: 600; font-size: clamp(1.15rem, 2.6vw, 1.7rem);
+  color: var(--l-fg);
+}
+.l-hand-tile { width: clamp(28px, 5.2vw, 62px); }
+.l-hand { min-height: 80px; }
+
+/* Keep the whole hand on a single line: tiles shrink to fit the card */
+.l-hand { flex-wrap: nowrap; width: 100%; gap: clamp(1px, .4vw, 5px); }
+.l-hand-tile { flex: 0 1 56px; min-width: 0; width: auto; height: auto; }

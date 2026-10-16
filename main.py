@@ -9,7 +9,7 @@ import sqlite3
 import traceback
 from typing import List, Optional
 
-from fastapi import Cookie, FastAPI, File, HTTPException, Response, UploadFile
+from fastapi import Cookie, FastAPI, File, HTTPException, Query, Response, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from PIL import Image
@@ -900,14 +900,117 @@ def close_active_lobby(mahjong_session: str = Cookie(default=None)):
     return {"status": "closed", "closed_lobby_id": lobby_row["id"]}
 
 
+def name_winning_hand(tiles: List[str], fan: int) -> str:
+  """Best-effort display name for a winning hand (limit hands, flushes, pongs)."""
+  def kind(path: str) -> str:
+    base = os.path.basename(path)
+    num = int(base.split("-")[0])
+    if num <= 3:
+      return "dragon"
+    if num <= 7:
+      return "wind"
+    if num <= 16:
+      return "characters"
+    if num <= 25:
+      return "circles"
+    if num <= 34:
+      return "bamboos"
+    return "flower"
+
+  def rank(path: str) -> int:
+    return int(path.rsplit("-", 1)[-1].split(".")[0])
+
+  play = [t for t in tiles if kind(t) != "flower"]
+  counts: dict = {}
+  for t in play:
+    counts[t] = counts.get(t, 0) + 1
+  kinds = {kind(t) for t in play}
+  honors = {"dragon", "wind"}
+  suits = kinds - honors
+  terminals_honors = {
+      t for t in counts if kind(t) in honors or (kind(t) in suits and rank(t) in (1, 9))
+  }
+  dragon_pongs = sum(1 for t, c in counts.items() if kind(t) == "dragon" and c >= 3)
+  dragon_pairs = sum(1 for t, c in counts.items() if kind(t) == "dragon" and c == 2)
+  wind_pongs = sum(1 for t, c in counts.items() if kind(t) == "wind" and c >= 3)
+  wind_pairs = sum(1 for t, c in counts.items() if kind(t) == "wind" and c == 2)
+
+  if len(play) == 14 and len(counts) == 13 and set(counts) == terminals_honors:
+    return "Thirteen Orphans"
+  if kinds and kinds <= honors:
+    return "All Honors"
+  if wind_pongs == 4:
+    return "Big Four Winds"
+  if wind_pongs == 3 and wind_pairs == 1:
+    return "Small Four Winds"
+  if dragon_pongs == 3:
+    return "Big Three Dragons"
+  if dragon_pongs == 2 and dragon_pairs == 1:
+    return "Small Three Dragons"
+  if play and set(counts) == terminals_honors and not kinds & honors:
+    return "All Terminals"
+  if len(suits) == 1 and not kinds & honors:
+    return "Full Flush"
+  if len(suits) == 1 and kinds & honors:
+    return "Half Flush"
+  if len(counts) == 7 and all(c == 2 for c in counts.values()):
+    return "Seven Pairs"
+  if sorted(counts.values()).count(2) == 1 and all(c >= 3 for t, c in counts.items() if c != 2):
+    return "All Pongs"
+  return f"{fan} Fan Hand"
+
+
+@app.get("/api/public/top-hand")
+def get_top_hand():
+  """Highest-fan logged win, shown on the landing page."""
+  init_db()
+  with get_db_connection() as conn:
+    row = conn.execute(
+        """
+        SELECT ph.winning_hand, ph.fan_score, ph.created_at,
+               u.display_name, u.avatar_url
+        FROM play_history ph
+        JOIN users u ON u.id = ph.user_id
+        WHERE ph.outcome = 'win'
+        ORDER BY ph.fan_score DESC, ph.id DESC
+        LIMIT 1
+        """
+    ).fetchone()
+  if not row:
+    return {"top_hand": None}
+  try:
+    tiles = json.loads(row["winning_hand"])
+  except (TypeError, ValueError):
+    return {"top_hand": None}
+  valid_tiles = [t for t in tiles if t in VALID_TILE_PATHS]
+  return {
+      "top_hand": {
+          "tiles": valid_tiles,
+          "hand_name": name_winning_hand(valid_tiles, int(row["fan_score"])),
+          "fan_score": int(row["fan_score"]),
+          "display_name": row["display_name"],
+          "avatar_url": row["avatar_url"],
+          "created_at": row["created_at"],
+      }
+  }
+
+
 @app.post("/api/tables/{table_number}/join")
 def join_table(
-    table_number: int, mahjong_session: str = Cookie(default=None)
+    table_number: int,
+    source: str = Query(default=""),
+    mahjong_session: str = Cookie(default=None),
 ):
   init_db()
   now = datetime.datetime.now(datetime.timezone.utc).isoformat()
   with get_db_connection() as conn:
     user_row = get_current_user_row(conn, mahjong_session)
+    # Players may only take a seat by scanning the table's QR/NFC tag.
+    if source != "tag" and not user_row["is_admin"]:
+      raise HTTPException(
+          status_code=403,
+          detail="Scan the QR code or NFC tag at the table to take a seat.",
+      )
     lobby_row = get_active_lobby_row(conn)
     if not lobby_row:
       raise HTTPException(

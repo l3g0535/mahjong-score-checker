@@ -13,7 +13,7 @@
   <link rel="stylesheet"
     href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap">
   <link rel="stylesheet" href="landing-base.css">
-  <link rel="stylesheet" id="landingTheme" href="landing-a.css">
+  <link rel="stylesheet" href="landing-a.css">
   <script src="landing.js"></script>
 </head>
 
@@ -31,9 +31,16 @@
     <div class="l-tiles" id="heroTiles" aria-hidden="true"></div>
     <div class="l-hero-inner">
       <span class="l-eyebrow">Hong Kong / Singapore fan scoring</span>
-      <h1>Know your hand's worth <em>in seconds.</em></h1>
-      <p class="l-lede">Snap a photo, let AI read your tiles, and get the fan count instantly. Then take a seat at the
-        table and climb the leaderboard.</p>
+      <figure class="l-showcase" id="topHand" aria-label="Highest scoring hand logged">
+        <figcaption class="l-showcase-head">
+          <span class="l-showcase-badge">🏆 Hall of Fame</span>
+          <span id="topHandFan" class="l-showcase-fan"></span>
+        </figcaption>
+        <img id="topHandAvatar" src="tiles/01-white-dragon.svg" alt="" class="l-showcase-avatar">
+        <h2 id="topHandName" class="l-showcase-name">a player</h2>
+        <p id="topHandTitle" class="l-showcase-handname"></p>
+        <div class="l-hand" id="topHandTiles"></div>
+      </figure>
       <div class="l-cta">
         <a href="calculator.html" id="ctaCalculator" class="l-btn l-btn-primary">Open Calculator</a>
         <a href="lobby.html?auth=login" id="ctaSignup" class="l-btn l-btn-ghost">Log In / Sign Up</a>

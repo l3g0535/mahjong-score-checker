@@ -1845,3 +1845,9 @@ h4,
     font-size: 0.8rem;
   }
 }
+
+/* Available table card: View / Join actions and roster */
+.available-table-actions { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+.table-roster { list-style: none; margin: 10px 0 0; padding: 10px 12px; border-radius: 10px; background: var(--recessed-surface); font-size: .85rem; text-align: left; }
+.table-roster li { padding: 2px 0; }
+.table-roster.hidden { display: none; }
