@@ -40,10 +40,15 @@ function markHandScanned(imageDataUrl) {
     thumb.src = lastScannedPhotoDataUrl;
     thumb.classList.remove("hidden");
   }
+  document.getElementById("editHandBtn")?.classList.remove("hidden");
   updateWinPayoutUI();
 }
 
 function resetHandScanState() {
+  document.getElementById("editHandBtn")?.classList.add("hidden");
+  document.getElementById("editHandSection")?.classList.add("hidden");
+  const editBtn = document.getElementById("editHandBtn");
+  if (editBtn) editBtn.textContent = "Edit wrongly scanned tiles";
   handScannedByCamera = false;
   lastScannedPhotoDataUrl = "";
 
@@ -66,8 +71,69 @@ function getMyTableObj() {
   const tables = activeLobbyState.tables || [];
   return tables.find(t => t.table_number === mySeatState.table_number) || null;
 }
+function renderAvailableTables() {
+  const listEl = document.getElementById("availableTablesList");
+  if (!listEl) return;
+
+  const tables = activeLobbyState?.tables || [];
+  if (!activeLobbyState || getMyTableObj() || tables.length === 0) {
+    listEl.classList.add("hidden");
+    listEl.innerHTML = "";
+    return;
+  }
+
+  listEl.innerHTML = "";
+  listEl.classList.remove("hidden");
+  const loggedIn = Boolean(window.currentSessionUser);
+
+  tables.forEach(t => {
+    const seats = t.seats || [];
+    const seated = seats.length;
+    const isFull = seated >= 4;
+    const card = document.createElement("div");
+    card.className = `available-table-card ${isFull ? "full" : "open"}`;
+
+    const visual = document.createElement("div");
+    visual.className = "mj-table-visual";
+    for (let i = 1; i <= 4; i++) {
+      const occupant = seats.find(s => s.seat_index === i);
+      const seat = document.createElement("div");
+      seat.className = `mj-seat mj-seat-${i}${occupant ? " taken" : ""}`;
+      if (occupant) {
+        seat.title = occupant.display_name || occupant.username || "";
+        const img = document.createElement("img");
+        img.src = occupant.avatar_url || "tiles/01-white-dragon.svg";
+        img.alt = "";
+        seat.appendChild(img);
+      }
+      visual.appendChild(seat);
+    }
+    const felt = document.createElement("div");
+    felt.className = "mj-table-felt";
+    felt.textContent = t.table_number;
+    visual.appendChild(felt);
+
+    const title = document.createElement("div");
+    title.className = "available-table-name";
+    title.textContent = `Table ${t.table_number}`;
+    const count = document.createElement("div");
+    count.className = "available-table-count";
+    count.textContent = isFull ? "Full — 4 of 4 seats taken" : `${seated} of 4 seats taken`;
+
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "primary-btn small-btn";
+    btn.textContent = isFull ? "Full" : loggedIn ? "Join" : "Log in to join";
+    btn.disabled = isFull || !loggedIn;
+    btn.addEventListener("click", () => joinTableByNumber(t.table_number));
+
+    card.append(visual, title, count, btn);
+    listEl.appendChild(card);
+  });
+}
 
 function renderTableSessionCard() {
+  renderAvailableTables();
   const badgeEl = document.getElementById("lobbyStatusBadge");
   const titleEl = document.getElementById("tableSessionTitle");
   const hintEl = document.getElementById("tableSessionHint");
@@ -101,8 +167,8 @@ function renderTableSessionCard() {
     if (titleEl) titleEl.textContent = "Not Seated at a Table";
     if (hintEl) {
       hintEl.innerHTML = window.currentSessionUser
-        ? `Scan your table's NFC tag or QR code (<code>/?table=1</code> … <code>/?table=${activeLobbyState.num_tables}</code>) to take a seat.`
-        : `Log in and scan your table's NFC tag or QR code (<code>/?table=1</code> … <code>/?table=${activeLobbyState.num_tables}</code>) to take a seat.`;
+        ? `Scan your table's NFC tag or QR code (<code>/?table=1</code> … <code>/?table=${activeLobbyState.num_tables}</code>) or pick a table below to take a seat.`
+        : `Log in and scan your table's NFC tag or QR code (<code>/?table=1</code> … <code>/?table=${activeLobbyState.num_tables}</code>) or pick a table below to take a seat.`;
     }
     seatsGridEl?.classList.add("hidden");
     leaveBtn?.classList.add("hidden");

@@ -722,6 +722,13 @@ document.getElementById("clearBtn")?.addEventListener("click", () => {
   window.resetHandScanState?.();
 });
 
+document.getElementById("editHandBtn")?.addEventListener("click", (e) => {
+  const section = document.getElementById("editHandSection");
+  if (!section) return;
+  const isHidden = section.classList.toggle("hidden");
+  e.currentTarget.textContent = isHidden ? "Edit wrongly scanned tiles" : "Hide tile editor";
+});
+
 
 // Initialize board
 renderRow("honors", honors);

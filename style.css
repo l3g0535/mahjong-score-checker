@@ -1453,3 +1453,86 @@ body {
   display: flex;
   gap: 8px;
 }
+
+/* Available tables: mahjong table visual cards */
+.available-tables-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 14px;
+  margin: 14px 0;
+}
+.available-table-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 12px 12px;
+  background: linear-gradient(180deg, #ffffff, #f1f5f9);
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.available-table-card.open:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.12);
+}
+.available-table-card.full {
+  opacity: 0.65;
+}
+.mj-table-visual {
+  position: relative;
+  width: 112px;
+  height: 112px;
+  margin: 4px 0;
+}
+.mj-table-felt {
+  position: absolute;
+  inset: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 14px;
+  background: radial-gradient(circle at 30% 30%, #2f9e6b, #1b6b47);
+  border: 3px solid #8b5e34;
+  box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.35);
+  color: #fff;
+  font-size: 1.6rem;
+  font-weight: 800;
+}
+.mj-seat {
+  position: absolute;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 2px dashed #cbd5e1;
+  background: #f8fafc;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.mj-seat.taken {
+  border: 2px solid #f59e0b;
+  background: #fff7e0;
+}
+.mj-seat img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.mj-seat-1 { top: 0; left: 50%; transform: translateX(-50%); }
+.mj-seat-2 { right: 0; top: 50%; transform: translateY(-50%); }
+.mj-seat-3 { bottom: 0; left: 50%; transform: translateX(-50%); }
+.mj-seat-4 { left: 0; top: 50%; transform: translateY(-50%); }
+.available-table-name {
+  font-weight: 700;
+  color: #1e293b;
+}
+.available-table-count {
+  font-size: 0.85rem;
+  color: #64748b;
+}
+.available-table-card .primary-btn {
+  width: 100%;
+}
