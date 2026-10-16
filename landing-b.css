@@ -1,0 +1,34 @@
+/* Variant B – premium dark green / gold glassmorphism */
+:root {
+  --l-bg: #07140F;
+  --l-fg: #F3EEDC;
+  --l-muted: rgba(243, 238, 220, 0.68);
+  --l-accent: #E3C377;
+  --l-border: rgba(227, 195, 119, 0.18);
+  --l-border-strong: rgba(227, 195, 119, 0.4);
+  --l-nav-bg: rgba(7, 20, 15, 0.6);
+  --l-hero-bg:
+    radial-gradient(circle at 20% 15%, rgba(46, 125, 90, 0.45), transparent 45%),
+    radial-gradient(circle at 85% 80%, rgba(227, 195, 119, 0.18), transparent 40%),
+    linear-gradient(180deg, #0B2419 0%, #07140F 100%);
+  --l-grad: linear-gradient(90deg, #F5DE9C, #C4A66A 55%, #E3C377);
+  --l-btn-bg: linear-gradient(135deg, #F5DE9C, #C4A66A);
+  --l-btn-fg: #07140F;
+  --l-btn-shadow: 0 8px 28px rgba(227, 195, 119, 0.35);
+  --l-ghost-hover: rgba(227, 195, 119, 0.1);
+  --l-chip-bg: rgba(255, 255, 255, 0.06);
+  --l-chip-fg: #E3C377;
+  --l-card-bg: linear-gradient(145deg, rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0.03));
+  --l-card-shadow: 0 16px 48px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  --l-card-blur: blur(18px) saturate(140%);
+  --l-tile-opacity: .38;
+  --l-tile-filter: drop-shadow(0 10px 18px rgba(0, 0, 0, 0.55)) drop-shadow(0 0 14px rgba(227, 195, 119, 0.15));
+}
+.l-btn-primary:hover { box-shadow: 0 10px 36px rgba(227, 195, 119, 0.55); }
+.l-card:hover { box-shadow: 0 20px 56px rgba(0, 0, 0, 0.5), 0 0 28px rgba(227, 195, 119, 0.15); }
+.l-section { position: relative; }
+.l-final {
+  margin-top: 20px; border-radius: 28px; border: 1px solid var(--l-border);
+  background: radial-gradient(circle at 50% 0%, rgba(46, 125, 90, 0.3), transparent 70%);
+}
+.l-footer { background: rgba(0, 0, 0, 0.25); }

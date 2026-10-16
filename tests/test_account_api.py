@@ -209,7 +209,7 @@ def test_change_password_flow(client):
 
 
 def test_static_pages_serve_auth_and_profile_views(client):
-    index_res = client.get("/index.html")
+    index_res = client.get("/lobby.html")
     assert index_res.status_code == 200
     assert "authModal" in index_res.text
 

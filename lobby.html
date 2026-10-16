@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Score Checker</title>
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="mylogo.png">
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+  <main class="display">
+    <header class="app-header">
+      <div class="header-brand">
+        <img src="mylogo.png" alt="Logo" class="app-logo">
+        <h1>Score Checker</h1>
+      </div>
+      <a href="calculator.html" id="calculatorLink" class="admin-nav-chip"
+        title="Open the points calculator">Calculator</a>
+      <div class="header-auth" id="authHeaderBar">
+        <div id="guestAuthActions" class="auth-actions">
+          <button type="button" id="openAuthModalBtn" class="auth-header-btn">Log In / Sign Up</button>
+        </div>
+        <div id="userAuthActions" class="auth-actions hidden">
+          <a href="admin.html" id="headerAdminLink" class="admin-nav-chip hidden"
+            title="Open Admin Lobby & Review Dashboard">Admin</a>
+          <a href="profile.html" id="headerProfileLink" class="profile-chip" title="View Personal Profile">
+            <img id="headerAvatar" src="tiles/01-white-dragon.svg" alt="Avatar" class="header-avatar">
+            <span id="headerDisplayName">Player</span>
+          </a>
+          <button type="button" id="headerLogoutBtn" class="auth-logout-btn">Log Out</button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Table / Game Session & Win Logging Panel -->
+    <section id="tableSessionCard" class="table-session-card">
+      <div class="table-session-header">
+        <div>
+          <span id="lobbyStatusBadge" class="lobby-badge">No Active Lobby</span>
+          <h2 id="tableSessionTitle" class="table-session-title">Table Session</h2>
+        </div>
+        <div class="table-header-actions">
+          <button type="button" id="refreshTableBtn" class="secondary-btn small-btn"
+            title="Refresh table state">Refresh</button>
+          <button type="button" id="leaveTableBtn" class="auth-logout-btn hidden">Leave Table</button>
+        </div>
+      </div>
+
+      <p id="tableSessionHint" class="field-hint">
+        Scan your table's NFC tag or QR code to take a seat when an event lobby is open. Below are the available tables.
+      </p>
+
+      <!-- Available Tables (browse & join) -->
+      <div id="availableTablesList" class="available-tables-list hidden"></div>
+
+      <!-- Lobby Leaderboard (Top 5 + View All) -->
+      <div id="lobbyLeaderboardSection" class="leaderboard-section hidden">
+        <div class="section-header-row leaderboard-header-row">
+          <h3 class="leaderboard-title">🏆 Lobby Leaderboard</h3>
+          <span id="leaderboardCountBadge" class="lobby-badge">0 Players</span>
+        </div>
+        <div id="lobbyLeaderboardEmpty" class="leaderboard-empty-state hidden">
+          No players have joined the lobby yet.
+        </div>
+        <div id="lobbyLeaderboardList" class="leaderboard-list"></div>
+        <button type="button" id="toggleLeaderboardBtn" class="secondary-btn small-btn leaderboard-toggle-btn hidden">
+          View All Players
+        </button>
+      </div>
+
+      <div id="tableWinFeedback" class="form-feedback hidden"></div>
+    </section>
+  </main>
+
+  <!-- Authentication Modal -->
+  <div id="authModal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="authModalTitle">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h2 id="authModalTitle">Log In</h2>
+        <button type="button" id="closeAuthModalBtn" class="modal-close-btn" aria-label="Close">&times;</button>
+      </div>
+
+      <div class="auth-tabs">
+        <button type="button" id="tabLoginBtn" class="auth-tab active">Log In</button>
+        <button type="button" id="tabSignupBtn" class="auth-tab">Sign Up</button>
+      </div>
+
+      <form id="authForm" class="auth-form">
+        <div class="form-field">
+          <label for="authUsername">Username</label>
+          <input type="text" id="authUsername" name="username" autocomplete="username"
+            placeholder="At least 3 characters" required>
+        </div>
+
+        <div class="form-field">
+          <label for="authPassword">Password</label>
+          <input type="password" id="authPassword" name="password" autocomplete="current-password"
+            placeholder="At least 6 characters" required>
+        </div>
+
+        <div id="authErrorMsg" class="form-feedback error-feedback hidden"></div>
+
+        <button type="submit" id="authSubmitBtn" class="primary-btn full-width-btn">Log In</button>
+      </form>
+    </div>
+  </div>
+
+  <script src="auth.js"></script>
+  <script src="table.js"></script>
+</body>
+
+</html>

@@ -69,7 +69,7 @@ function resetHandScanState() {
 const IS_LOBBY_PAGE = Boolean(document.getElementById("availableTablesList"));
 const IS_TABLE_PAGE = Boolean(document.getElementById("tableSeatsGrid"));
 
-// index.html = table sessions (lobby), table.html = inside a table session.
+// lobby.html = table sessions (lobby), table.html = inside a table session.
 function routeBySeat() {
   const seated = Boolean(getMyTableObj());
   if (IS_LOBBY_PAGE && seated) {
@@ -77,7 +77,7 @@ function routeBySeat() {
     return true;
   }
   if (IS_TABLE_PAGE && !seated) {
-    window.location.replace("index.html");
+    window.location.replace("lobby.html");
     return true;
   }
   return false;

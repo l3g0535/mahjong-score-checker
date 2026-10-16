@@ -1,0 +1,24 @@
+/* Variant A – matches style.css brand palette */
+:root {
+  --l-bg: #F6F3EA;
+  --l-fg: #263F36;
+  --l-muted: #5D7069;
+  --l-accent: #B84A45;
+  --l-border: rgba(38, 63, 54, 0.14);
+  --l-border-strong: rgba(38, 63, 54, 0.28);
+  --l-nav-bg: rgba(246, 243, 234, 0.85);
+  --l-hero-bg: radial-gradient(ellipse at 50% 0%, #FFFFFF 0%, #F6F3EA 55%, #E4E7DC 100%);
+  --l-grad: linear-gradient(90deg, #B84A45, #C4A66A);
+  --l-btn-bg: #263F36;
+  --l-btn-fg: #F6F3EA;
+  --l-btn-shadow: 0 8px 20px rgba(38, 63, 54, 0.25);
+  --l-ghost-hover: rgba(38, 63, 54, 0.06);
+  --l-chip-bg: rgba(255, 255, 255, 0.7);
+  --l-chip-fg: #5B8B72;
+  --l-card-bg: #FFFFFF;
+  --l-card-shadow: 0 10px 30px rgba(38, 63, 54, 0.08);
+  --l-card-blur: none;
+  --l-tile-opacity: .5;
+  --l-tile-filter: drop-shadow(0 8px 12px rgba(38, 63, 54, 0.18));
+}
+.l-final { background: transparent; }

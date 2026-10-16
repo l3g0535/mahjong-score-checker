@@ -14,7 +14,7 @@ function hideAdminFeedback() {
 }
 
 function buildTableFullUrl(tableNumber) {
-  const url = new URL("index.html", window.location.origin + "/");
+  const url = new URL("lobby.html", window.location.origin + "/");
   url.searchParams.set("table", String(tableNumber));
   return url.toString();
 }
@@ -253,7 +253,7 @@ function renderAdminTables(lobby) {
           <code class="table-url-code">${fullUrl}</code>
           <div class="admin-link-buttons">
             <button type="button" class="secondary-btn small-btn copy-url-btn" data-url="${fullUrl}">Copy Link</button>
-            <a href="index.html?table=${table.table_number}" class="secondary-btn small-btn">Open Table ${table.table_number}</a>
+            <a href="lobby.html?table=${table.table_number}" class="secondary-btn small-btn">Open Table ${table.table_number}</a>
           </div>
         </div>
       </div>
@@ -289,7 +289,7 @@ async function loadAdminDashboard() {
   try {
     const meRes = await fetch("/api/me", { credentials: "same-origin" });
     if (meRes.status === 401) {
-      window.location.href = "index.html?auth=login";
+      window.location.href = "lobby.html?auth=login";
       return;
     }
     const me = await meRes.json();
@@ -429,7 +429,7 @@ async function handleAdminLogout() {
       credentials: "same-origin"
     });
   } finally {
-    window.location.href = "index.html";
+    window.location.href = "lobby.html";
   }
 }
 

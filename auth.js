@@ -181,7 +181,7 @@ async function handleLogout() {
     renderAuthHeader(null);
     window.onAuthStateChanged?.(null);
     if (window.location.pathname.endsWith("profile.html") || window.location.pathname.endsWith("admin.html")) {
-      window.location.href = "index.html";
+      window.location.href = "lobby.html";
     }
   }
 }

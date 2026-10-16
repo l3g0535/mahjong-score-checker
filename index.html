@@ -3,113 +3,88 @@
 
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Score Checker</title>
-  <!-- Favicon -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Score Checker – Mahjong Fan Calculator, AI Tile Scan &amp; Table Leaderboards</title>
+  <meta name="description"
+    content="Scan your mahjong hand with AI, calculate fan instantly, and track table results and leaderboards at live events.">
   <link rel="icon" type="image/png" href="mylogo.png">
-  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap">
+  <link rel="stylesheet" href="landing-base.css">
+  <link rel="stylesheet" id="landingTheme" href="landing-a.css">
+  <script src="landing.js"></script>
 </head>
 
 <body>
-  <main class="display">
-    <header class="app-header">
-      <div class="header-brand">
-        <img src="mylogo.png" alt="Logo" class="app-logo">
-        <h1>Score Checker</h1>
+  <nav class="l-nav" id="landingNav">
+    <a href="index.html" class="l-brand"><img src="mylogo.png" alt="" class="l-logo"><span>Score Checker</span></a>
+    <div class="l-nav-links">
+      <a href="#features">Features</a>
+      <a href="calculator.html">Calculator</a>
+      <a href="lobby.html?auth=login" id="navLoginBtn" class="l-btn l-btn-ghost">Log In</a>
+    </div>
+  </nav>
+
+  <header class="l-hero" id="hero">
+    <div class="l-tiles" id="heroTiles" aria-hidden="true"></div>
+    <div class="l-hero-inner">
+      <span class="l-eyebrow">Hong Kong / Singapore fan scoring</span>
+      <h1>Know your hand's worth <em>in seconds.</em></h1>
+      <p class="l-lede">Snap a photo, let AI read your tiles, and get the fan count instantly. Then take a seat at the
+        table and climb the leaderboard.</p>
+      <div class="l-cta">
+        <a href="calculator.html" id="ctaCalculator" class="l-btn l-btn-primary">Open Calculator</a>
+        <a href="lobby.html?auth=login" id="ctaSignup" class="l-btn l-btn-ghost">Log In / Sign Up</a>
       </div>
-      <a href="calculator.html" id="calculatorLink" class="admin-nav-chip"
-        title="Open the points calculator">Calculator</a>
-      <div class="header-auth" id="authHeaderBar">
-        <div id="guestAuthActions" class="auth-actions">
-          <button type="button" id="openAuthModalBtn" class="auth-header-btn">Log In / Sign Up</button>
-        </div>
-        <div id="userAuthActions" class="auth-actions hidden">
-          <a href="admin.html" id="headerAdminLink" class="admin-nav-chip hidden"
-            title="Open Admin Lobby & Review Dashboard">Admin</a>
-          <a href="profile.html" id="headerProfileLink" class="profile-chip" title="View Personal Profile">
-            <img id="headerAvatar" src="tiles/01-white-dragon.svg" alt="Avatar" class="header-avatar">
-            <span id="headerDisplayName">Player</span>
-          </a>
-          <button type="button" id="headerLogoutBtn" class="auth-logout-btn">Log Out</button>
-        </div>
+    </div>
+    <a href="#features" class="l-scroll" aria-label="Scroll to features"><span></span></a>
+  </header>
+
+  <main>
+    <section class="l-section" id="features">
+      <h2 class="l-title">Everything for the table</h2>
+      <p class="l-sub">From the first tile to the final tally.</p>
+      <div class="l-grid">
+        <article class="l-card reveal">
+          <img src="tiles/03-red-dragon.svg" alt="" class="l-card-tile">
+          <h3>AI Tile Scan</h3>
+          <p>Upload a photo of your hand. Our vision model recognises every tile and fills in the calculator for you.</p>
+        </article>
+        <article class="l-card reveal">
+          <img src="tiles/02-green-dragon.svg" alt="" class="l-card-tile">
+          <h3>Fan Calculator</h3>
+          <p>Detects limit hands, stacks yaku and flowers, and caps payouts by your table's rules.</p>
+          <a href="calculator.html" class="l-link">Try it now &rarr;</a>
+        </article>
+        <article class="l-card reveal">
+          <img src="tiles/04-east-wind.svg" alt="" class="l-card-tile">
+          <h3>Tables &amp; Leaderboard</h3>
+          <p>Scan a table's NFC or QR tag, log wins, and watch the live event leaderboard update.</p>
+          <a href="lobby.html" class="l-link">View tables &rarr;</a>
+        </article>
       </div>
-    </header>
+    </section>
 
-    <!-- Table / Game Session & Win Logging Panel -->
-    <section id="tableSessionCard" class="table-session-card">
-      <div class="table-session-header">
-        <div>
-          <span id="lobbyStatusBadge" class="lobby-badge">No Active Lobby</span>
-          <h2 id="tableSessionTitle" class="table-session-title">Table Session</h2>
-        </div>
-        <div class="table-header-actions">
-          <button type="button" id="refreshTableBtn" class="secondary-btn small-btn"
-            title="Refresh table state">Refresh</button>
-          <button type="button" id="leaveTableBtn" class="auth-logout-btn hidden">Leave Table</button>
-        </div>
+    <section class="l-section l-final reveal">
+      <h2 class="l-title">Ready to play?</h2>
+      <div class="l-cta">
+        <a href="calculator.html" class="l-btn l-btn-primary">Open Calculator</a>
+        <a href="lobby.html" class="l-btn l-btn-ghost">Go to Tables</a>
       </div>
-
-      <p id="tableSessionHint" class="field-hint">
-        Scan your table's NFC tag or QR code to take a seat when an event lobby is open. Below are the available tables.
-      </p>
-
-      <!-- Available Tables (browse & join) -->
-      <div id="availableTablesList" class="available-tables-list hidden"></div>
-
-      <!-- Lobby Leaderboard (Top 5 + View All) -->
-      <div id="lobbyLeaderboardSection" class="leaderboard-section hidden">
-        <div class="section-header-row leaderboard-header-row">
-          <h3 class="leaderboard-title">🏆 Lobby Leaderboard</h3>
-          <span id="leaderboardCountBadge" class="lobby-badge">0 Players</span>
-        </div>
-        <div id="lobbyLeaderboardEmpty" class="leaderboard-empty-state hidden">
-          No players have joined the lobby yet.
-        </div>
-        <div id="lobbyLeaderboardList" class="leaderboard-list"></div>
-        <button type="button" id="toggleLeaderboardBtn" class="secondary-btn small-btn leaderboard-toggle-btn hidden">
-          View All Players
-        </button>
-      </div>
-
-      <div id="tableWinFeedback" class="form-feedback hidden"></div>
     </section>
   </main>
 
-  <!-- Authentication Modal -->
-  <div id="authModal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="authModalTitle">
-    <div class="modal-card">
-      <div class="modal-header">
-        <h2 id="authModalTitle">Log In</h2>
-        <button type="button" id="closeAuthModalBtn" class="modal-close-btn" aria-label="Close">&times;</button>
-      </div>
-
-      <div class="auth-tabs">
-        <button type="button" id="tabLoginBtn" class="auth-tab active">Log In</button>
-        <button type="button" id="tabSignupBtn" class="auth-tab">Sign Up</button>
-      </div>
-
-      <form id="authForm" class="auth-form">
-        <div class="form-field">
-          <label for="authUsername">Username</label>
-          <input type="text" id="authUsername" name="username" autocomplete="username"
-            placeholder="At least 3 characters" required>
-        </div>
-
-        <div class="form-field">
-          <label for="authPassword">Password</label>
-          <input type="password" id="authPassword" name="password" autocomplete="current-password"
-            placeholder="At least 6 characters" required>
-        </div>
-
-        <div id="authErrorMsg" class="form-feedback error-feedback hidden"></div>
-
-        <button type="submit" id="authSubmitBtn" class="primary-btn full-width-btn">Log In</button>
-      </form>
+  <footer class="l-footer">
+    <a href="index.html" class="l-brand"><img src="mylogo.png" alt="" class="l-logo"><span>Score Checker</span></a>
+    <div class="l-footer-links">
+      <a href="calculator.html">Calculator</a>
+      <a href="lobby.html">Tables</a>
+      <a href="lobby.html?auth=login">Log In</a>
     </div>
-  </div>
-
-  <script src="auth.js"></script>
-  <script src="table.js"></script>
+    <small>&copy; <span id="year"></span> Score Checker</small>
+  </footer>
 </body>
 
 </html>

@@ -217,7 +217,7 @@ async function loadProfile() {
   try {
     const res = await fetch("/api/me", { credentials: "same-origin" });
     if (res.status === 401) {
-      window.location.href = "index.html?auth=login";
+      window.location.href = "lobby.html?auth=login";
       return;
     }
     if (!res.ok) {
@@ -357,7 +357,7 @@ async function handleProfileLogout() {
       credentials: "same-origin"
     });
   } finally {
-    window.location.href = "index.html";
+    window.location.href = "lobby.html";
   }
 }
 
