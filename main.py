@@ -228,6 +228,22 @@ def init_db() -> None:
         )
         """
     )
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS lobby_scores (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          lobby_id INTEGER NOT NULL,
+          user_id INTEGER NOT NULL,
+          lobby_points INTEGER NOT NULL DEFAULT 0,
+          hands_won INTEGER NOT NULL DEFAULT 0,
+          hands_played INTEGER NOT NULL DEFAULT 0,
+          updated_at TEXT NOT NULL,
+          UNIQUE (lobby_id, user_id),
+          FOREIGN KEY (lobby_id) REFERENCES lobbies (id) ON DELETE CASCADE,
+          FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+        )
+        """
+    )
     sync_admin_users(conn)
     conn.commit()
 
@@ -360,6 +376,39 @@ def require_admin_user(
   return user_row
 
 
+def build_lobby_leaderboard(
+    conn: sqlite3.Connection, lobby_id: int
+) -> List[dict]:
+  rows = conn.execute(
+      """
+      SELECT ls.user_id, ls.lobby_points, ls.hands_won, ls.hands_played,
+             u.username, u.display_name, u.avatar_url,
+             ts.table_number AS current_table
+      FROM lobby_scores ls
+      JOIN users u ON u.id = ls.user_id
+      LEFT JOIN table_seats ts ON ts.lobby_id = ls.lobby_id AND ts.user_id = ls.user_id
+      WHERE ls.lobby_id = ?
+      ORDER BY ls.lobby_points DESC, ls.hands_won DESC, LOWER(u.display_name) ASC, LOWER(u.username) ASC
+      """,
+      (lobby_id,),
+  ).fetchall()
+
+  leaderboard = []
+  for idx, r in enumerate(rows, start=1):
+    leaderboard.append({
+        "rank": idx,
+        "user_id": r["user_id"],
+        "username": r["username"],
+        "display_name": r["display_name"],
+        "avatar_url": r["avatar_url"],
+        "lobby_points": int(r["lobby_points"]),
+        "hands_won": int(r["hands_won"]),
+        "hands_played": int(r["hands_played"]),
+        "current_table": r["current_table"],
+    })
+  return leaderboard
+
+
 def build_lobby_payload(
     conn: sqlite3.Connection,
     lobby_row: Optional[sqlite3.Row],
@@ -446,6 +495,8 @@ def build_lobby_payload(
         "pending_wins": t_pending,
     })
 
+  leaderboard = build_lobby_leaderboard(conn, lobby_id)
+
   return {
       "lobby": {
           "id": lobby_id,
@@ -455,6 +506,7 @@ def build_lobby_payload(
           "created_at": lobby_row["created_at"],
           "tables": tables,
           "pending_wins_count": len(pending_rows),
+          "leaderboard": leaderboard,
       },
       "my_seat": my_seat,
   }
@@ -523,6 +575,25 @@ def apply_win_payout(
   for sr in seat_rows:
     uid = sr["user_id"]
     delta = deltas[uid]
+    won_inc = 1 if uid == winner_user_id else 0
+    conn.execute(
+        """
+        INSERT OR IGNORE INTO lobby_scores (lobby_id, user_id, lobby_points, hands_won, hands_played, updated_at)
+        VALUES (?, ?, 0, 0, 0, ?)
+        """,
+        (lobby_row["id"], uid, now),
+    )
+    conn.execute(
+        """
+        UPDATE lobby_scores
+        SET lobby_points = lobby_points + ?,
+            hands_won = hands_won + ?,
+            hands_played = hands_played + 1,
+            updated_at = ?
+        WHERE lobby_id = ? AND user_id = ?
+        """,
+        (delta, won_inc, now, lobby_row["id"], uid),
+    )
     if delta != 0:
       conn.execute(
           """
@@ -766,6 +837,20 @@ def get_active_lobby(mahjong_session: str = Cookie(default=None)):
     return build_lobby_payload(conn, lobby_row, current_user_id)
 
 
+@app.get("/api/lobby/leaderboard")
+def get_lobby_leaderboard():
+  init_db()
+  with get_db_connection() as conn:
+    lobby_row = get_active_lobby_row(conn)
+    if not lobby_row:
+      return {"lobby_id": None, "lobby_name": None, "leaderboard": []}
+    return {
+        "lobby_id": lobby_row["id"],
+        "lobby_name": lobby_row["name"],
+        "leaderboard": build_lobby_leaderboard(conn, lobby_row["id"]),
+    }
+
+
 @app.post("/api/admin/lobby", status_code=201)
 def create_lobby(
     req: LobbyCreateRequest, mahjong_session: str = Cookie(default=None)
@@ -857,13 +942,33 @@ def join_table(
           detail=f"Table {table_number} is full (4/4 seats occupied).",
       )
 
+    conn.execute(
+        """
+        INSERT OR IGNORE INTO lobby_scores (lobby_id, user_id, lobby_points, hands_won, hands_played, updated_at)
+        VALUES (?, ?, 0, 0, 0, ?)
+        """,
+        (lobby_row["id"], user_row["id"], now),
+    )
+    score_row = conn.execute(
+        "SELECT lobby_points FROM lobby_scores WHERE lobby_id = ? AND user_id = ?",
+        (lobby_row["id"], user_row["id"]),
+    ).fetchone()
+    starting_session_pts = int(score_row["lobby_points"]) if score_row else 0
+
     next_seat = next(i for i in range(1, 5) if i not in taken_indices)
     conn.execute(
         """
         INSERT INTO table_seats (lobby_id, table_number, seat_index, user_id, session_points, joined_at)
-        VALUES (?, ?, ?, ?, 0, ?)
+        VALUES (?, ?, ?, ?, ?, ?)
         """,
-        (lobby_row["id"], table_number, next_seat, user_row["id"], now),
+        (
+            lobby_row["id"],
+            table_number,
+            next_seat,
+            user_row["id"],
+            starting_session_pts,
+            now,
+        ),
     )
     conn.commit()
     return build_lobby_payload(conn, lobby_row, user_row["id"])

@@ -111,7 +111,72 @@ function renderPendingWins(pendingWins) {
   });
 }
 
+let adminShowAllLeaderboard = false;
+let currentAdminLobby = null;
+
+function renderAdminLeaderboard(lobby) {
+  const countBadge = document.getElementById("adminLeaderboardCountBadge");
+  const emptyEl = document.getElementById("adminLeaderboardEmpty");
+  const listEl = document.getElementById("adminLeaderboardList");
+  const toggleBtn = document.getElementById("adminToggleLeaderboardBtn");
+
+  if (!listEl) return;
+  listEl.innerHTML = "";
+
+  const entries = Array.isArray(lobby?.leaderboard) ? lobby.leaderboard : [];
+  if (countBadge) {
+    countBadge.textContent = `${entries.length} ${entries.length === 1 ? "Player" : "Players"}`;
+  }
+
+  if (!lobby || entries.length === 0) {
+    emptyEl?.classList.remove("hidden");
+    toggleBtn?.classList.add("hidden");
+    return;
+  }
+
+  emptyEl?.classList.add("hidden");
+  const visible = adminShowAllLeaderboard ? entries : entries.slice(0, 5);
+
+  visible.forEach(item => {
+    const row = document.createElement("div");
+    const rank = Number(item.rank) || 1;
+    const rankClass = rank <= 3 ? `rank-top-${rank}` : "rank-standard";
+    const pts = Number(item.lobby_points) || 0;
+    const ptsClass = pts > 0 ? "pts-positive" : pts < 0 ? "pts-negative" : "pts-neutral";
+    const ptsSign = pts > 0 ? `+${pts} pts` : `${pts} pts`;
+    const tableTag = item.current_table ? `Table ${item.current_table}` : "Unseated";
+    const winsLabel = `${item.hands_won || 0} ${item.hands_won === 1 ? "Win" : "Wins"}`;
+
+    row.className = "leaderboard-row";
+    row.innerHTML = `
+      <div class="leaderboard-left">
+        <span class="leaderboard-rank ${rankClass}">#${rank}</span>
+        <img src="${item.avatar_url || "tiles/01-white-dragon.svg"}" alt="Avatar" class="seat-avatar">
+        <div class="leaderboard-user-info">
+          <div class="seat-display-name">${item.display_name || item.username}</div>
+          <div class="leaderboard-meta">@${item.username} • ${tableTag} • ${winsLabel}</div>
+        </div>
+      </div>
+      <span class="seat-points-chip ${ptsClass}">${ptsSign}</span>
+    `;
+    listEl.appendChild(row);
+  });
+
+  if (toggleBtn) {
+    if (entries.length > 5) {
+      toggleBtn.classList.remove("hidden");
+      toggleBtn.textContent = adminShowAllLeaderboard
+        ? "Show Top 5"
+        : `View All (${entries.length} Players)`;
+    } else {
+      toggleBtn.classList.add("hidden");
+    }
+  }
+}
+
 function renderAdminTables(lobby) {
+  currentAdminLobby = lobby || null;
+  renderAdminLeaderboard(currentAdminLobby);
   const statusBadge = document.getElementById("adminLobbyStatusBadge");
   const tablesBadge = document.getElementById("activeTablesCountBadge");
   const closeBtn = document.getElementById("closeLobbyBtn");
@@ -372,5 +437,9 @@ document.getElementById("createLobbyForm")?.addEventListener("submit", handleCre
 document.getElementById("closeLobbyBtn")?.addEventListener("click", handleCloseLobby);
 document.getElementById("refreshAdminBtn")?.addEventListener("click", loadAdminDashboard);
 document.getElementById("adminLogoutBtn")?.addEventListener("click", handleAdminLogout);
+document.getElementById("adminToggleLeaderboardBtn")?.addEventListener("click", () => {
+  adminShowAllLeaderboard = !adminShowAllLeaderboard;
+  renderAdminLeaderboard(currentAdminLobby);
+});
 
 loadAdminDashboard();

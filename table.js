@@ -149,8 +149,84 @@ function renderAvailableTables() {
   });
 }
 
+let showAllLeaderboard = false;
+
+function renderLobbyLeaderboard() {
+  const sectionEl = document.getElementById("lobbyLeaderboardSection");
+  const countBadgeEl = document.getElementById("leaderboardCountBadge");
+  const emptyEl = document.getElementById("lobbyLeaderboardEmpty");
+  const listEl = document.getElementById("lobbyLeaderboardList");
+  const toggleBtn = document.getElementById("toggleLeaderboardBtn");
+
+  if (!sectionEl || !listEl) return;
+
+  if (!activeLobbyState) {
+    sectionEl.classList.add("hidden");
+    listEl.innerHTML = "";
+    return;
+  }
+
+  sectionEl.classList.remove("hidden");
+  const entries = Array.isArray(activeLobbyState.leaderboard)
+    ? activeLobbyState.leaderboard
+    : [];
+
+  if (countBadgeEl) {
+    countBadgeEl.textContent = `${entries.length} ${entries.length === 1 ? "Player" : "Players"}`;
+  }
+
+  if (entries.length === 0) {
+    emptyEl?.classList.remove("hidden");
+    listEl.innerHTML = "";
+    toggleBtn?.classList.add("hidden");
+    return;
+  }
+
+  emptyEl?.classList.add("hidden");
+  const visibleEntries = showAllLeaderboard ? entries : entries.slice(0, 5);
+  const myUserId = window.currentSessionUser?.id;
+
+  listEl.innerHTML = "";
+  visibleEntries.forEach(item => {
+    const row = document.createElement("div");
+    const isMe = myUserId && item.user_id === myUserId;
+    const rank = Number(item.rank) || 1;
+    const rankClass = rank <= 3 ? `rank-top-${rank}` : "rank-standard";
+    const pts = Number(item.lobby_points) || 0;
+    const ptsClass = pts > 0 ? "pts-positive" : pts < 0 ? "pts-negative" : "pts-neutral";
+    const tableTag = item.current_table ? `Table ${item.current_table}` : "Unseated";
+    const winsLabel = `${item.hands_won || 0} ${item.hands_won === 1 ? "Win" : "Wins"}`;
+
+    row.className = `leaderboard-row ${isMe ? "my-leaderboard-row" : ""}`;
+    row.innerHTML = `
+      <div class="leaderboard-left">
+        <span class="leaderboard-rank ${rankClass}">#${rank}</span>
+        <img src="${item.avatar_url || "tiles/01-white-dragon.svg"}" alt="Avatar" class="seat-avatar">
+        <div class="leaderboard-user-info">
+          <div class="seat-display-name">${item.display_name || item.username}${isMe ? " (You)" : ""}</div>
+          <div class="leaderboard-meta">@${item.username} • ${tableTag} • ${winsLabel}</div>
+        </div>
+      </div>
+      <span class="seat-points-chip ${ptsClass}">${formatPointsBadge(pts)}</span>
+    `;
+    listEl.appendChild(row);
+  });
+
+  if (toggleBtn) {
+    if (entries.length > 5) {
+      toggleBtn.classList.remove("hidden");
+      toggleBtn.textContent = showAllLeaderboard
+        ? "Show Top 5"
+        : `View All (${entries.length} Players)`;
+    } else {
+      toggleBtn.classList.add("hidden");
+    }
+  }
+}
+
 function renderTableSessionCard() {
   renderAvailableTables();
+  renderLobbyLeaderboard();
   const badgeEl = document.getElementById("lobbyStatusBadge");
   const titleEl = document.getElementById("tableSessionTitle");
   const hintEl = document.getElementById("tableSessionHint");
@@ -504,6 +580,10 @@ document.getElementById("refreshTableBtn")?.addEventListener("click", fetchActiv
 document.getElementById("discarderSelect")?.addEventListener("change", updateWinPayoutUI);
 document.getElementById("sendToAdminReviewCb")?.addEventListener("change", updateWinPayoutUI);
 document.getElementById("logWinBtn")?.addEventListener("click", handleSubmitTableWin);
+document.getElementById("toggleLeaderboardBtn")?.addEventListener("click", () => {
+  showAllLeaderboard = !showAllLeaderboard;
+  renderLobbyLeaderboard();
+});
 
 window.markHandScanned = markHandScanned;
 window.resetHandScanState = resetHandScanState;

@@ -241,3 +241,105 @@ def test_granular_admin_review_checkbox_workflow(app_env):
     assert clients[0].get("/api/me").json()["total_points"] == 7
     assert clients[1].get("/api/me").json()["total_points"] == -7
     assert len(admin.get("/api/admin/pending-wins").json()["pending_wins"]) == 0
+
+
+def test_lobby_leaderboard_ordering_and_persistence_across_tables(app_env):
+    admin = make_user_client(app_env, "admin")
+    admin.post("/api/admin/lobby", json={"name": "Grand Prix Lobby", "num_tables": 2})
+
+    # Create 8 players (4 on Table 1, 4 on Table 2) so we have > 5 players on the leaderboard
+    t1_clients = [make_user_client(app_env, f"alpha{i}") for i in range(1, 5)]
+    t2_clients = [make_user_client(app_env, f"bravo{i}") for i in range(1, 5)]
+    t1_ids = [c.get("/api/me").json()["id"] for c in t1_clients]
+    t2_ids = [c.get("/api/me").json()["id"] for c in t2_clients]
+
+    for c in t1_clients:
+        assert c.post("/api/tables/1/join").status_code == 200
+    for c in t2_clients:
+        assert c.post("/api/tables/2/join").status_code == 200
+
+    # Table 1: alpha1 wins 8-Fan Zi Mo (+24 for alpha1; -8 for alpha2, alpha3, alpha4)
+    assert (
+        t1_clients[0]
+        .post(
+            "/api/tables/1/wins",
+            json={
+                "winning_hand": SAMPLE_WINNING_HAND,
+                "fan_score": 8,
+                "win_type": "zimo",
+                "scanned_by_camera": True,
+            },
+        )
+        .status_code
+        == 200
+    )
+
+    # Table 2: bravo1 wins 5-Fan Discard off bravo2 (+5 for bravo1, -5 for bravo2, 0 for bravo3 & bravo4)
+    assert (
+        t2_clients[0]
+        .post(
+            "/api/tables/2/wins",
+            json={
+                "winning_hand": SAMPLE_WINNING_HAND,
+                "fan_score": 5,
+                "win_type": "discard",
+                "discarder_user_id": t2_ids[1],
+                "scanned_by_camera": True,
+            },
+        )
+        .status_code
+        == 200
+    )
+
+    # Table 1: alpha2 wins 3-Fan Discard off alpha4 (+3 for alpha2 -> net -5; -3 for alpha4 -> net -11)
+    assert (
+        t1_clients[1]
+        .post(
+            "/api/tables/1/wins",
+            json={
+                "winning_hand": SAMPLE_WINNING_HAND,
+                "fan_score": 3,
+                "win_type": "discard",
+                "discarder_user_id": t1_ids[3],
+                "scanned_by_camera": True,
+            },
+        )
+        .status_code
+        == 200
+    )
+
+    # Check leaderboard ordering via /api/lobby/leaderboard and /api/lobby/active
+    lb_res = admin.get("/api/lobby/leaderboard")
+    assert lb_res.status_code == 200
+    leaderboard = lb_res.json()["leaderboard"]
+    assert len(leaderboard) == 8
+
+    # Verify strict descending point order:
+    # 1. alpha1 (+24)
+    # 2. bravo1 (+5)
+    # 3. bravo3 (0)
+    # 4. bravo4 (0)
+    # 5. alpha2 (-5, 1 win)
+    # 6. bravo2 (-5, 0 wins)
+    # 7. alpha3 (-8)
+    # 8. alpha4 (-11)
+    points_list = [entry["lobby_points"] for entry in leaderboard]
+    assert points_list == [24, 5, 0, 0, -5, -5, -8, -11]
+    assert leaderboard[0]["username"] == "alpha1"
+    assert leaderboard[0]["rank"] == 1
+    assert leaderboard[0]["hands_won"] == 1
+    assert leaderboard[4]["username"] == "alpha2"
+    assert leaderboard[5]["username"] == "bravo2"
+    assert leaderboard[7]["username"] == "alpha4"
+    assert leaderboard[7]["rank"] == 8
+
+    # Verify score persistence when a player leaves a table and rejoins
+    assert t1_clients[0].post("/api/tables/leave").status_code == 200
+    lb_after_leave = admin.get("/api/lobby/active").json()["lobby"]["leaderboard"]
+    assert lb_after_leave[0]["username"] == "alpha1"
+    assert lb_after_leave[0]["lobby_points"] == 24
+    assert lb_after_leave[0]["current_table"] is None
+
+    rejoin_res = t1_clients[0].post("/api/tables/1/join")
+    assert rejoin_res.status_code == 200
+    assert rejoin_res.json()["my_seat"]["session_points"] == 24

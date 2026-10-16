@@ -90,6 +90,27 @@
 
       <div id="adminTablesGrid" class="admin-tables-grid"></div>
     </section>
+
+    <!-- 4. Lobby Leaderboard (Top 5 + View All) -->
+    <section class="profile-card">
+      <div class="section-header-row">
+        <h3>4. 🏆 Lobby Leaderboard</h3>
+        <span id="adminLeaderboardCountBadge" class="lobby-badge">0 Players</span>
+      </div>
+      <p class="field-hint">
+        Live player rankings in the active lobby from highest points to lowest points.
+      </p>
+
+      <div id="adminLeaderboardEmpty" class="history-empty-state">
+        <p class="empty-title">No players on the leaderboard yet</p>
+        <p class="empty-subtitle">Players will appear here once they join a table in the active lobby.</p>
+      </div>
+
+      <div id="adminLeaderboardList" class="leaderboard-list"></div>
+      <button type="button" id="adminToggleLeaderboardBtn" class="secondary-btn small-btn leaderboard-toggle-btn hidden">
+        View All Players
+      </button>
+    </section>
   </main>
 
   <script src="admin.js"></script>

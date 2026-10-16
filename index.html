@@ -56,6 +56,21 @@
       <!-- Available Tables (browse & join) -->
       <div id="availableTablesList" class="available-tables-list hidden"></div>
 
+      <!-- Lobby Leaderboard (Top 5 + View All) -->
+      <div id="lobbyLeaderboardSection" class="leaderboard-section hidden">
+        <div class="section-header-row leaderboard-header-row">
+          <h3 class="leaderboard-title">🏆 Lobby Leaderboard</h3>
+          <span id="leaderboardCountBadge" class="lobby-badge">0 Players</span>
+        </div>
+        <div id="lobbyLeaderboardEmpty" class="leaderboard-empty-state hidden">
+          No players have joined the lobby yet.
+        </div>
+        <div id="lobbyLeaderboardList" class="leaderboard-list"></div>
+        <button type="button" id="toggleLeaderboardBtn" class="secondary-btn small-btn leaderboard-toggle-btn hidden">
+          View All Players
+        </button>
+      </div>
+
       <div id="tableWinFeedback" class="form-feedback hidden"></div>
     </section>
   </main>
