@@ -169,11 +169,18 @@ function renderPlayHistory(historyList) {
     scoreTd.className = "history-fan-cell";
     scoreTd.textContent = `${entry.fan_score} Fan`;
 
+    const ptsTd = document.createElement("td");
+    const delta = Number(entry.point_delta) || 0;
+    const ptsClass = delta > 0 ? "pts-positive" : delta < 0 ? "pts-negative" : "pts-neutral";
+    const ptsLabel = delta > 0 ? `+${delta} pts` : `${delta} pts`;
+    ptsTd.innerHTML = `<span class="seat-points-chip ${ptsClass}">${ptsLabel}</span>`;
+
     const sessionTd = document.createElement("td");
     sessionTd.textContent = entry.table_session || "Standard Table";
 
     tr.appendChild(handTd);
     tr.appendChild(scoreTd);
+    tr.appendChild(ptsTd);
     tr.appendChild(sessionTd);
     tbody.appendChild(tr);
   });
@@ -182,15 +189,25 @@ function renderPlayHistory(historyList) {
 function populateProfileView(user) {
   const headerName = document.getElementById("profileHeaderDisplayName");
   const usernameBadge = document.getElementById("profileUsernameBadge");
+  const totalPointsBadge = document.getElementById("profileTotalPointsBadge");
   const joinedDate = document.getElementById("profileJoinedDate");
   const displayNameInput = document.getElementById("profileDisplayName");
   const bioInput = document.getElementById("profileBio");
+  const adminLink = document.getElementById("profileAdminLink");
 
   if (headerName) headerName.textContent = user.display_name || user.username;
   if (usernameBadge) usernameBadge.textContent = `@${user.username}`;
+  if (totalPointsBadge) {
+    const pts = Number(user.total_points) || 0;
+    totalPointsBadge.textContent = pts > 0 ? `+${pts} pts` : `${pts} pts`;
+    totalPointsBadge.className = `seat-points-chip ${pts > 0 ? "pts-positive" : pts < 0 ? "pts-negative" : "pts-neutral"}`;
+  }
   if (joinedDate) joinedDate.textContent = formatJoinDate(user.created_at);
   if (displayNameInput) displayNameInput.value = user.display_name || user.username;
   if (bioInput) bioInput.value = user.bio || "";
+  if (adminLink) {
+    adminLink.classList.toggle("hidden", !user.is_admin);
+  }
 
   updateSelectedAvatarPreview(user.avatar_url || "tiles/01-white-dragon.svg");
   renderPlayHistory(user.play_history || []);

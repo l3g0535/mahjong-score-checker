@@ -20,6 +20,7 @@
           <button type="button" id="openAuthModalBtn" class="auth-header-btn">Log In / Sign Up</button>
         </div>
         <div id="userAuthActions" class="auth-actions hidden">
+          <a href="admin.html" id="headerAdminLink" class="admin-nav-chip hidden" title="Open Admin Lobby & Review Dashboard">Admin</a>
           <a href="profile.html" id="headerProfileLink" class="profile-chip" title="View Personal Profile">
             <img id="headerAvatar" src="tiles/01-white-dragon.svg" alt="Avatar" class="header-avatar">
             <span id="headerDisplayName">Player</span>
@@ -28,6 +29,63 @@
         </div>
       </div>
     </header>
+
+    <!-- Table / Game Session & Win Logging Panel -->
+    <section id="tableSessionCard" class="table-session-card">
+      <div class="table-session-header">
+        <div>
+          <span id="lobbyStatusBadge" class="lobby-badge">No Active Lobby</span>
+          <h2 id="tableSessionTitle" class="table-session-title">Table Session</h2>
+        </div>
+        <div class="table-header-actions">
+          <button type="button" id="refreshTableBtn" class="secondary-btn small-btn" title="Refresh table state">Refresh</button>
+          <button type="button" id="leaveTableBtn" class="auth-logout-btn hidden">Leave Table</button>
+        </div>
+      </div>
+
+      <p id="tableSessionHint" class="field-hint">
+        Scan your table's NFC tag or QR code (e.g. <code>/?table=1</code>) to take a seat when an event lobby is open.
+      </p>
+
+      <!-- 4 Seats Grid -->
+      <div id="tableSeatsGrid" class="table-seats-grid hidden"></div>
+
+      <!-- Camera Scan & Win Logging Controls -->
+      <div class="win-logging-box">
+        <div class="win-review-checkbox-row">
+          <label class="checkbox-label review-checkbox-label" for="sendToAdminReviewCb">
+            <input type="checkbox" id="sendToAdminReviewCb">
+            <span>Send to Admin for Review (keep scanned photo &amp; supposed points for Admin approval before logging)</span>
+          </label>
+        </div>
+
+        <div class="camera-scan-row">
+          <button type="button" id="openCameraBtn" class="camera-trigger-btn">📷 Scan Winning Hand with Camera</button>
+          <input type="file" id="nativeCameraInput" accept="image/*" capture="environment" class="hidden">
+        </div>
+
+        <div id="scanStatusRow" class="scan-status-row">
+          <span id="scanStatusBadge" class="scan-badge scan-badge-pending">Not scanned yet — camera scan required to log a table win</span>
+          <img id="scannedPhotoThumb" class="scanned-photo-thumb hidden" alt="Scanned hand preview">
+        </div>
+
+        <div id="winPayoutControls" class="win-payout-controls hidden">
+          <div id="discarderPickerGroup" class="setting-group">
+            <label for="discarderSelect">Discarder (Who dealt into this hand?):</label>
+            <select id="discarderSelect">
+              <option value="">-- Select opponent who discarded --</option>
+            </select>
+          </div>
+
+          <div id="payoutPreviewBox" class="payout-preview-box"></div>
+
+          <button type="button" id="logWinBtn" class="primary-btn full-width-btn" disabled>Log Winning Hand</button>
+        </div>
+
+        <div id="tableWinFeedback" class="form-feedback hidden"></div>
+      </div>
+    </section>
+
       <!-- Top Container: Side-by-Side Squares -->
       <div class="sticky-hand-container">
       <div class="score-card">
@@ -156,6 +214,8 @@
   </div>
 
   <script src="app.js"></script>
+  <script src="ai.js"></script>
   <script src="auth.js"></script>
+  <script src="table.js"></script>
 </body>
 </html>

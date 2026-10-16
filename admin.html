@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Admin Lobby &amp; Table Manager - Score Checker</title>
+  <link rel="icon" type="image/png" href="mylogo.png">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="display admin-page">
+    <header class="app-header">
+      <div class="header-brand">
+        <a href="index.html" class="back-link" title="Back to Score Checker">&larr; Score Checker</a>
+        <h1>Admin Dashboard</h1>
+      </div>
+      <div class="header-auth">
+        <a href="profile.html" class="profile-chip" title="View Personal Profile">
+          <span id="adminHeaderName">Admin</span>
+        </a>
+        <button type="button" id="adminLogoutBtn" class="auth-logout-btn">Log Out</button>
+      </div>
+    </header>
+
+    <div id="adminGlobalFeedback" class="form-feedback hidden"></div>
+
+    <!-- 1. Open / Manage Active Lobby -->
+    <section class="profile-card">
+      <div class="section-header-row">
+        <h3>1. Event Lobby Control</h3>
+        <span id="adminLobbyStatusBadge" class="lobby-badge">Checking...</span>
+      </div>
+      <p class="field-hint">
+        Open a lobby and set the number of Mahjong tables (4 seats per table). Each table gets a stable NFC link and QR code (<code>/?table=1</code>, <code>/?table=2</code>, …).
+      </p>
+
+      <form id="createLobbyForm" class="profile-form">
+        <div class="admin-form-grid">
+          <div class="form-field">
+            <label for="lobbyNameInput">Event / Lobby Name</label>
+            <input type="text" id="lobbyNameInput" name="name" maxlength="80" placeholder="e.g. Friday Club Tournament" value="Mahjong Event Lobby" required>
+          </div>
+
+          <div class="form-field">
+            <label for="lobbyTablesInput">Number of Open Tables (4 seats each)</label>
+            <input type="number" id="lobbyTablesInput" name="num_tables" min="1" max="50" value="4" required>
+          </div>
+        </div>
+
+        <div class="admin-lobby-actions">
+          <button type="submit" id="openLobbyBtn" class="primary-btn">Open / Reset Lobby</button>
+          <button type="button" id="closeLobbyBtn" class="auth-logout-btn hidden">Close Active Lobby</button>
+          <button type="button" id="refreshAdminBtn" class="secondary-btn">Refresh Live Data</button>
+        </div>
+      </form>
+    </section>
+
+    <!-- 2. Pending Winning Hand Review Queue -->
+    <section class="profile-card">
+      <div class="section-header-row">
+        <h3>2. Winning Hand Review Queue</h3>
+        <span id="pendingReviewCountBadge" class="history-count-badge">0 Pending</span>
+      </div>
+      <p class="field-hint">
+        When a player ticks "Send to Admin for Review" before scanning their winning hand, the photo and supposed point changes appear here for approval before being logged.
+      </p>
+
+      <div id="pendingWinsEmpty" class="history-empty-state">
+        <p class="empty-title">No winning hands awaiting review</p>
+        <p class="empty-subtitle">Hands flagged for Admin review will appear here with their scanned photo, detected tiles, and supposed point payouts.</p>
+      </div>
+
+      <div id="pendingWinsList" class="pending-wins-list"></div>
+    </section>
+
+    <!-- 3. Active Tables, Seats & NFC / QR Codes -->
+    <section class="profile-card">
+      <div class="section-header-row">
+        <h3>3. Open Tables, QR Codes &amp; Seated Players</h3>
+        <span id="activeTablesCountBadge" class="lobby-badge">0 Tables</span>
+      </div>
+      <p class="field-hint">
+        Players can scan the QR code or tap an NFC tag programmed with the table URL to assign themselves to that table.
+      </p>
+
+      <div id="adminTablesEmpty" class="history-empty-state">
+        <p class="empty-title">No active lobby open</p>
+        <p class="empty-subtitle">Use the form above to open a lobby and generate tables with QR codes and NFC links.</p>
+      </div>
+
+      <div id="adminTablesGrid" class="admin-tables-grid"></div>
+    </section>
+  </main>
+
+  <script src="admin.js"></script>
+</body>
+</html>

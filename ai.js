@@ -19,13 +19,17 @@ async function processImageWithAI(imageDataUrl) {
     const data = await response.json();
     const detectedTiles = data.tiles || [];
 
+    if (typeof window.markHandScanned === "function") {
+      window.markHandScanned(imageDataUrl);
+    }
+
     if (detectedTiles.length > 0) {
       if (typeof window.clearHand === 'function') window.clearHand();
       detectedTiles.forEach(tilePath => {
         if (typeof window.addTile === 'function') window.addTile(tilePath);
       });
     } else {
-      alert("No tiles recognized. Adjust lighting or camera angle.");
+      alert("No tiles recognized automatically. You can adjust lighting/angle or tap tiles manually to fix the scanned hand.");
       if (typeof calculateScore === 'function') calculateScore();
     }
 

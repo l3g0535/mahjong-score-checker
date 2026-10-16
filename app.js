@@ -59,6 +59,8 @@ let hand = [];
 let MAX_POINTS = 13;
 let currentSeatWind = "tiles/04-east-wind.svg";
 let currentTableWind = "tiles/04-east-wind.svg";
+let currentHandIsValid = false;
+let currentTotalFan = 0;
 
 // --- DOM Element References ---
 const seatWindEl = document.getElementById("seatWind");
@@ -505,18 +507,24 @@ function calculateScore() {
 
   // Render info/warning messages in the Rules Box
   if (!hasEnoughTiles) {
+    currentHandIsValid = false;
+    currentTotalFan = 0;
     document.getElementById("score").textContent = "0";
     document.getElementById("rules").innerHTML = `
       <span class="info-text">You need ${requiredTileCount} non-flower tiles for score calculation (Currently: ${normalTiles.length}/${requiredTileCount}).</span>
     `;
+    window.onHandScoreUpdated?.();
     return;
   }
 
   if (!isValidHand) {
+    currentHandIsValid = false;
+    currentTotalFan = 0;
     document.getElementById("score").textContent = "0";
     document.getElementById("rules").innerHTML = `
       <span class="warning-text">Invalid hand structure (Must be 4 valid melds + 1 pair or 7 pairs or 13 orphans).</span>
     `;
+    window.onHandScoreUpdated?.();
     return;
   }
 
@@ -590,6 +598,9 @@ function calculateScore() {
 }
 
 function updateDisplay(totalFan, matchedRules) {
+  currentHandIsValid = true;
+  currentTotalFan = totalFan;
+
   const scoreEl = document.getElementById("score");
   const rulesEl = document.getElementById("rules");
 
@@ -604,11 +615,14 @@ function updateDisplay(totalFan, matchedRules) {
         .join("");
     }
   }
+  window.onHandScoreUpdated?.();
 }
 
 // --- Hand Management ---
 function clearHand() {
   hand = [];
+  currentHandIsValid = false;
+  currentTotalFan = 0;
   
   const checkboxesToReset = ["ziMo", "concealedHand", "robbingKong", "replacementTile", "instantFlowerWin", "heavenlyHand", "earthlyHand"];
   checkboxesToReset.forEach(id => {
@@ -630,6 +644,7 @@ function clearHand() {
   }
   
   updateTileCount();
+  window.onHandScoreUpdated?.();
 }
 
 function updateTileCount() {
@@ -702,7 +717,10 @@ if (slider && sliderValue) {
   });
 }
 
-document.getElementById("clearBtn")?.addEventListener("click", clearHand);
+document.getElementById("clearBtn")?.addEventListener("click", () => {
+  clearHand();
+  window.resetHandScanState?.();
+});
 
 
 // Initialize board
@@ -717,3 +735,11 @@ updateTileCount();
 window.clearHand = clearHand;
 window.addTile = addTile;
 window.removeTile = removeTile;
+window.getHandState = () => ({
+  hand: [...hand],
+  isValidHand: currentHandIsValid,
+  totalFan: currentTotalFan,
+  seatWind: currentSeatWind,
+  tableWind: currentTableWind,
+  isZiMo: Boolean(document.getElementById("ziMo")?.checked) || Boolean(document.getElementById("instantFlowerWin")?.checked)
+});

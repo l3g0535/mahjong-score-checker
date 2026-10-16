@@ -1,18 +1,5 @@
 let currentAuthMode = "login";
-
-function showAuthError(message) {
-  const errorEl = document.getElementById("authErrorMsg");
-  if (!errorEl) return;
-  errorEl.textContent = message;
-  errorEl.classList.remove("hidden");
-}
-
-function hideAuthError() {
-  const errorEl = document.getElementById("authErrorMsg");
-  if (!errorEl) return;
-  errorEl.textContent = "";
-  errorEl.classList.add("hidden");
-}
+window.currentSessionUser = null;
 
 function setAuthMode(mode) {
   currentAuthMode = mode === "signup" ? "signup" : "login";
@@ -21,6 +8,7 @@ function setAuthMode(mode) {
   const submitBtn = document.getElementById("authSubmitBtn");
   const tabLoginBtn = document.getElementById("tabLoginBtn");
   const tabSignupBtn = document.getElementById("tabSignupBtn");
+  const errorEl = document.getElementById("authErrorMsg");
   const passwordInput = document.getElementById("authPassword");
 
   if (titleEl) {
@@ -41,7 +29,10 @@ function setAuthMode(mode) {
       currentAuthMode === "signup" ? "new-password" : "current-password"
     );
   }
-  hideAuthError();
+  if (errorEl) {
+    errorEl.textContent = "";
+    errorEl.classList.add("hidden");
+  }
 }
 
 function openAuthModal(mode = "login") {
@@ -56,14 +47,20 @@ function closeAuthModal() {
   modal?.classList.add("hidden");
   const form = document.getElementById("authForm");
   form?.reset();
-  hideAuthError();
+  const errorEl = document.getElementById("authErrorMsg");
+  if (errorEl) {
+    errorEl.textContent = "";
+    errorEl.classList.add("hidden");
+  }
 }
 
 function renderAuthHeader(user) {
+  window.currentSessionUser = user || null;
   const guestActions = document.getElementById("guestAuthActions");
   const userActions = document.getElementById("userAuthActions");
   const avatarEl = document.getElementById("headerAvatar");
   const nameEl = document.getElementById("headerDisplayName");
+  const adminLink = document.getElementById("headerAdminLink");
 
   if (user && user.username) {
     guestActions?.classList.add("hidden");
@@ -74,9 +71,13 @@ function renderAuthHeader(user) {
     if (nameEl) {
       nameEl.textContent = user.display_name || user.username;
     }
+    if (adminLink) {
+      adminLink.classList.toggle("hidden", !user.is_admin);
+    }
   } else {
     guestActions?.classList.remove("hidden");
     userActions?.classList.add("hidden");
+    adminLink?.classList.add("hidden");
   }
 }
 
@@ -85,13 +86,16 @@ async function fetchCurrentSessionUser() {
     const res = await fetch("/api/me", { credentials: "same-origin" });
     if (!res.ok) {
       renderAuthHeader(null);
+      window.onAuthStateChanged?.(null);
       return null;
     }
     const user = await res.json();
     renderAuthHeader(user);
+    window.onAuthStateChanged?.(user);
     return user;
   } catch (err) {
     renderAuthHeader(null);
+    window.onAuthStateChanged?.(null);
     return null;
   }
 }
@@ -100,22 +104,31 @@ async function handleAuthFormSubmit(e) {
   e.preventDefault();
   const usernameInput = document.getElementById("authUsername");
   const passwordInput = document.getElementById("authPassword");
+  const errorEl = document.getElementById("authErrorMsg");
   const submitBtn = document.getElementById("authSubmitBtn");
 
   const username = (usernameInput?.value || "").trim();
   const password = passwordInput?.value || "";
 
-  hideAuthError();
+  if (errorEl) {
+    errorEl.textContent = "";
+    errorEl.classList.add("hidden");
+  }
 
-  if (currentAuthMode === "signup") {
-    if (username.length < 3) {
-      showAuthError("Username must be at least 3 characters long.");
-      return;
+  if (username.length < 3) {
+    if (errorEl) {
+      errorEl.textContent = "Username must be at least 3 characters long.";
+      errorEl.classList.remove("hidden");
     }
-    if (password.length < 6) {
-      showAuthError("Password must be at least 6 characters long.");
-      return;
+    return;
+  }
+
+  if (password.length < 6) {
+    if (errorEl) {
+      errorEl.textContent = "Password must be at least 6 characters long.";
+      errorEl.classList.remove("hidden");
     }
+    return;
   }
 
   const endpoint = currentAuthMode === "signup" ? "/api/signup" : "/api/login";
@@ -131,19 +144,28 @@ async function handleAuthFormSubmit(e) {
 
     const data = await res.json();
     if (!res.ok) {
-      showAuthError(data.detail || "Authentication failed.");
+      if (errorEl) {
+        errorEl.textContent = data.detail || "Authentication failed.";
+        errorEl.classList.remove("hidden");
+      }
       return;
     }
 
     renderAuthHeader(data);
     closeAuthModal();
+    window.onAuthStateChanged?.(data);
 
     const params = new URLSearchParams(window.location.search);
     if (params.get("auth") === "login") {
-      window.history.replaceState({}, document.title, window.location.pathname);
+      params.delete("auth");
+      const qs = params.toString();
+      window.history.replaceState({}, document.title, window.location.pathname + (qs ? `?${qs}` : ""));
     }
   } catch (err) {
-    showAuthError("Could not connect to server.");
+    if (errorEl) {
+      errorEl.textContent = "Could not connect to server.";
+      errorEl.classList.remove("hidden");
+    }
   } finally {
     if (submitBtn) submitBtn.disabled = false;
   }
@@ -157,6 +179,10 @@ async function handleLogout() {
     });
   } finally {
     renderAuthHeader(null);
+    window.onAuthStateChanged?.(null);
+    if (window.location.pathname.endsWith("profile.html") || window.location.pathname.endsWith("admin.html")) {
+      window.location.href = "index.html";
+    }
   }
 }
 
@@ -176,7 +202,7 @@ document.getElementById("authModal")?.addEventListener("click", e => {
 // Initialize header auth state on page load
 fetchCurrentSessionUser().then(user => {
   const params = new URLSearchParams(window.location.search);
-  if (!user && params.get("auth") === "login") {
+  if (!user && (params.get("auth") === "login" || params.get("table"))) {
     openAuthModal("login");
   }
 });
@@ -184,3 +210,4 @@ fetchCurrentSessionUser().then(user => {
 window.openAuthModal = openAuthModal;
 window.closeAuthModal = closeAuthModal;
 window.handleLogout = handleLogout;
+window.fetchCurrentSessionUser = fetchCurrentSessionUser;

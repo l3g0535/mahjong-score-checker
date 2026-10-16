@@ -15,6 +15,7 @@
         <h1>Personal Profile</h1>
       </div>
       <div class="header-auth">
+        <a href="admin.html" id="profileAdminLink" class="admin-nav-chip hidden" title="Open Admin Dashboard">Admin Dashboard</a>
         <button type="button" id="profileLogoutBtn" class="auth-logout-btn">Log Out</button>
       </div>
     </header>
@@ -29,6 +30,7 @@
           <h2 id="profileHeaderDisplayName">Loading...</h2>
           <div class="profile-badges">
             <span id="profileUsernameBadge" class="username-badge">@user</span>
+            <span id="profileTotalPointsBadge" class="seat-points-chip pts-neutral">0 pts</span>
             <span id="profileJoinedDate" class="joined-date">Joined recently</span>
           </div>
         </div>
@@ -71,11 +73,11 @@
         <h3>Play History</h3>
         <span id="playHistoryCount" class="history-count-badge">0 Hands</span>
       </div>
-      <p class="field-hint">Winning hands, fan scores, and table sessions associated with your account.</p>
+      <p class="field-hint">Winning hands, fan scores, point changes, and table sessions associated with your account.</p>
 
       <div id="playHistoryEmpty" class="history-empty-state">
         <p class="empty-title">No winning hands logged yet</p>
-        <p class="empty-subtitle">When you log winning hands from the Score Checker, your Winning Hand tiles, Fan Score, and Table / Game Session will appear here.</p>
+        <p class="empty-subtitle">When hands are logged at your table, the Winning Hand tiles, Fan Score, Point Change, and Table / Game Session will appear here.</p>
       </div>
 
       <div id="playHistoryTableWrapper" class="history-table-wrapper hidden">
@@ -84,6 +86,7 @@
             <tr>
               <th>Winning Hand</th>
               <th>Score (Fan)</th>
+              <th>Points</th>
               <th>Table / Game Session</th>
             </tr>
           </thead>
