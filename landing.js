@@ -108,3 +108,78 @@ document.addEventListener("DOMContentLoaded", () => {
     io.observe(el);
   });
 });
+
+// Confetti bursts erupting from behind the Hall of Fame card, repeating every few seconds.
+function startConfetti() {
+  const canvas = document.getElementById("confetti");
+  const card = document.getElementById("topHand");
+  const hero = document.getElementById("hero");
+  if (!canvas || !card || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  const ctx = canvas.getContext("2d");
+  const COLORS = ["#C4A66A", "#B84A45", "#5B8B72", "#263F36", "#E8C872", "#8FA9E8"];
+  let pieces = [];
+  let visible = true;
+  let raf = null;
+
+  function resize() {
+    canvas.width = hero.clientWidth;
+    canvas.height = hero.clientHeight;
+  }
+
+  function burst() {
+    if (!visible) return;
+    const heroRect = hero.getBoundingClientRect();
+    const r = card.getBoundingClientRect();
+    const cx = r.left - heroRect.left + r.width / 2;
+    const cy = r.top - heroRect.top + r.height * 0.45;
+    for (let i = 0; i < 120; i++) {
+      const angle = Math.random() * Math.PI * 2;
+      const speed = 6 + Math.random() * 11;
+      pieces.push({
+        x: cx + Math.cos(angle) * r.width * 0.25 * Math.random(),
+        y: cy,
+        vx: Math.cos(angle) * speed * 1.2,
+        vy: Math.sin(angle) * speed - 5,
+        w: 6 + Math.random() * 7,
+        h: 4 + Math.random() * 6,
+        rot: Math.random() * Math.PI,
+        vr: (Math.random() - 0.5) * 0.4,
+        color: COLORS[(Math.random() * COLORS.length) | 0],
+        life: 0,
+        max: 140 + Math.random() * 80
+      });
+    }
+    if (!raf) raf = requestAnimationFrame(tick);
+  }
+
+  function tick() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    pieces = pieces.filter((p) => p.life < p.max);
+    pieces.forEach((p) => {
+      p.life++;
+      p.vy += 0.28;
+      p.vx *= 0.985;
+      p.x += p.vx;
+      p.y += p.vy;
+      p.rot += p.vr;
+      ctx.save();
+      ctx.globalAlpha = Math.min(1, (p.max - p.life) / 40);
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.rot);
+      ctx.fillStyle = p.color;
+      ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+      ctx.restore();
+    });
+    raf = pieces.length ? requestAnimationFrame(tick) : null;
+  }
+
+  resize();
+  window.addEventListener("resize", resize);
+  if ("IntersectionObserver" in window) {
+    new IntersectionObserver((e) => { visible = e[0].isIntersecting; }).observe(hero);
+  }
+  setTimeout(burst, 900);
+  setInterval(burst, 4500);
+}
+
+document.addEventListener("DOMContentLoaded", startConfetti);

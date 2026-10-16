@@ -174,3 +174,6 @@ h1, h2, h3, .l-brand { font-family: 'Outfit', sans-serif; }
 /* Keep the whole hand on a single line: tiles shrink to fit the card */
 .l-hand { flex-wrap: nowrap; width: 100%; gap: clamp(1px, .4vw, 5px); }
 .l-hand-tile { flex: 0 1 56px; min-width: 0; width: auto; height: auto; }
+
+/* Confetti sits above the floating tiles but behind the Hall of Fame card */
+.l-confetti { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
