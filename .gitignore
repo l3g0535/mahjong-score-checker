@@ -1,0 +1,8 @@
+# AI tooling customizations (colleagues may not have access to the same AI tools)
+.agents/
+.venv/
+.scratch/
+__pycache__/
+.pytest_cache/
+*.db
+

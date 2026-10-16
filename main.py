@@ -1,12 +1,20 @@
-import traceback
-
-from fastapi import FastAPI, File, UploadFile, HTTPException
-from fastapi.middleware.cors import CORSMiddleware
-from ultralytics import YOLO
-from PIL import Image
+import base64
+import contextlib
+import datetime
+import hashlib
 import io
 import os
+import secrets
+import sqlite3
+import traceback
+from typing import Iterator
+
+from fastapi import Cookie, FastAPI, File, HTTPException, Response, UploadFile
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from PIL import Image
+from pydantic import BaseModel
+from ultralytics import YOLO
 
 app = FastAPI()
 
@@ -19,22 +27,17 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Load your custom trained YOLO model weights
-MODEL_PATH = "best.pt"
-ONNX_PATH = "best.onnx"
+SESSION_COOKIE_NAME = "mahjong_session"
+SESSION_TTL_DAYS = 30
+DEFAULT_AVATAR = "tiles/01-white-dragon.svg"
+MAX_AVATAR_BYTES = 2 * 1024 * 1024
+ALLOWED_DATA_URL_PREFIXES = (
+    "data:image/png;base64,",
+    "data:image/jpeg;base64,",
+    "data:image/jpg;base64,",
+    "data:image/webp;base64,",
+)
 
-if not os.path.exists(MODEL_PATH):
-  raise RuntimeError(f"Model weights not found at {MODEL_PATH}")
-
-# Export to ONNX only if it hasn't been exported yet
-if not os.path.exists(ONNX_PATH):
-  print("Exporting model to ONNX format...")
-  temp_model = YOLO(MODEL_PATH)
-  temp_model.export(format="onnx")
-
-
-
-model = YOLO(MODEL_PATH)
 # Dictionary mapping your model's class names to your app's exact SVG paths
 # Note: Ensure these keys match the exact class names labels you used in Roboflow!
 CLASS_TO_SVG = {
@@ -81,15 +84,325 @@ CLASS_TO_SVG = {
     "3F": "tiles/41-chrysanthemum.svg",
     "4F": "tiles/42-bamboo.svg"
 }
+VALID_TILE_PATHS = set(CLASS_TO_SVG.values())
+
+
+def get_db_path() -> str:
+  return os.environ.get("MAHJONG_DB_PATH", "mahjong.db")
+
+
+@contextlib.contextmanager
+def get_db_connection() -> Iterator[sqlite3.Connection]:
+  conn = sqlite3.connect(get_db_path())
+  conn.row_factory = sqlite3.Row
+  try:
+    with conn:
+      yield conn
+  finally:
+    conn.close()
+
+
+def init_db() -> None:
+  with get_db_connection() as conn:
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS users (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          username TEXT UNIQUE NOT NULL,
+          password_hash TEXT NOT NULL,
+          display_name TEXT NOT NULL,
+          bio TEXT NOT NULL DEFAULT '',
+          avatar_url TEXT NOT NULL,
+          created_at TEXT NOT NULL
+        )
+        """
+    )
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS sessions (
+          token TEXT PRIMARY KEY,
+          user_id INTEGER NOT NULL,
+          created_at TEXT NOT NULL,
+          expires_at TEXT NOT NULL,
+          FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+        )
+        """
+    )
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS play_history (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          user_id INTEGER NOT NULL,
+          winning_hand TEXT NOT NULL,
+          fan_score INTEGER NOT NULL,
+          table_session TEXT NOT NULL DEFAULT '',
+          created_at TEXT NOT NULL,
+          FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+        )
+        """
+    )
+
+
+def hash_password(password: str, salt: str = None) -> str:
+  if salt is None:
+    salt = secrets.token_hex(16)
+  dk = hashlib.pbkdf2_hmac(
+      "sha256", password.encode("utf-8"), salt.encode("utf-8"), 100_000
+  )
+  return f"{salt}${dk.hex()}"
+
+
+def verify_password(password: str, stored_hash: str) -> bool:
+  if "$" not in stored_hash:
+    return False
+  salt, _ = stored_hash.split("$", 1)
+  return secrets.compare_digest(hash_password(password, salt), stored_hash)
+
+
+def validate_avatar_url(avatar_url: str) -> str:
+  avatar_url = avatar_url.strip()
+  if avatar_url in VALID_TILE_PATHS:
+    return avatar_url
+  for prefix in ALLOWED_DATA_URL_PREFIXES:
+    if avatar_url.startswith(prefix):
+      b64_part = avatar_url[len(prefix) :]
+      try:
+        raw = base64.b64decode(b64_part, validate=True)
+      except Exception:
+        raise HTTPException(
+            status_code=400, detail="Invalid base64 image data."
+        )
+      if len(raw) == 0:
+        raise HTTPException(status_code=400, detail="Empty image data.")
+      if len(raw) > MAX_AVATAR_BYTES:
+        raise HTTPException(
+            status_code=400, detail="Avatar image must not exceed 2MB."
+        )
+      return avatar_url
+  raise HTTPException(
+      status_code=400,
+      detail="Avatar must be a valid Mahjong tile SVG or a PNG/JPEG/WebP image up to 2MB.",
+  )
+
+
+def build_user_payload(conn: sqlite3.Connection, user_row: sqlite3.Row) -> dict:
+  history_rows = conn.execute(
+      """
+      SELECT id, winning_hand, fan_score, table_session, created_at
+      FROM play_history
+      WHERE user_id = ?
+      ORDER BY id DESC
+      """,
+      (user_row["id"],),
+  ).fetchall()
+  return {
+      "username": user_row["username"],
+      "display_name": user_row["display_name"],
+      "bio": user_row["bio"],
+      "avatar_url": user_row["avatar_url"],
+      "created_at": user_row["created_at"],
+      "play_history": [dict(r) for r in history_rows],
+  }
+
+
+def issue_session_cookie(
+    conn: sqlite3.Connection, user_id: int, response: Response
+) -> None:
+  now_dt = datetime.datetime.now(datetime.timezone.utc)
+  expires_dt = now_dt + datetime.timedelta(days=SESSION_TTL_DAYS)
+  token = secrets.token_urlsafe(32)
+  conn.execute(
+      "INSERT INTO sessions (token, user_id, created_at, expires_at) VALUES (?, ?, ?, ?)",
+      (token, user_id, now_dt.isoformat(), expires_dt.isoformat()),
+  )
+  response.set_cookie(
+      key=SESSION_COOKIE_NAME,
+      value=token,
+      httponly=True,
+      samesite="lax",
+      max_age=SESSION_TTL_DAYS * 86400,
+      path="/",
+  )
+
+
+def get_current_user_row(
+    conn: sqlite3.Connection, session_token: str = None
+) -> sqlite3.Row:
+  if not session_token:
+    raise HTTPException(status_code=401, detail="Not authenticated")
+  now_iso = datetime.datetime.now(datetime.timezone.utc).isoformat()
+  row = conn.execute(
+      """
+      SELECT u.*
+      FROM sessions s
+      JOIN users u ON u.id = s.user_id
+      WHERE s.token = ? AND s.expires_at > ?
+      """,
+      (session_token, now_iso),
+  ).fetchone()
+  if not row:
+    raise HTTPException(status_code=401, detail="Invalid or expired session")
+  return row
+
+
+init_db()
+
+
+class AuthCredentials(BaseModel):
+  username: str
+  password: str
+
+
+class ProfileUpdate(BaseModel):
+  display_name: str
+  bio: str = ""
+  avatar_url: str
+
+
+class PasswordUpdate(BaseModel):
+  new_password: str
+
+
+@app.post("/api/signup", status_code=201)
+def signup(creds: AuthCredentials, response: Response):
+  username = creds.username.strip()
+  password = creds.password
+  if len(username) < 3:
+    raise HTTPException(
+        status_code=400, detail="Username must be at least 3 characters long."
+    )
+  if len(password) < 6:
+    raise HTTPException(
+        status_code=400, detail="Password must be at least 6 characters long."
+    )
+  now = datetime.datetime.now(datetime.timezone.utc).isoformat()
+  pw_hash = hash_password(password)
+
+  with get_db_connection() as conn:
+    try:
+      cursor = conn.execute(
+          """
+          INSERT INTO users (username, password_hash, display_name, bio, avatar_url, created_at)
+          VALUES (?, ?, ?, '', ?, ?)
+          """,
+          (username, pw_hash, username, DEFAULT_AVATAR, now),
+      )
+    except sqlite3.IntegrityError:
+      raise HTTPException(
+          status_code=409, detail="Username is already taken."
+      )
+    user_id = cursor.lastrowid
+    issue_session_cookie(conn, user_id, response)
+    user_row = conn.execute(
+        "SELECT * FROM users WHERE id = ?", (user_id,)
+    ).fetchone()
+    return build_user_payload(conn, user_row)
+
+
+@app.post("/api/login")
+def login(creds: AuthCredentials, response: Response):
+  username = creds.username.strip()
+  password = creds.password
+
+  with get_db_connection() as conn:
+    user_row = conn.execute(
+        "SELECT * FROM users WHERE username = ?", (username,)
+    ).fetchone()
+    if not user_row or not verify_password(password, user_row["password_hash"]):
+      raise HTTPException(
+          status_code=401, detail="Invalid username or password."
+      )
+    issue_session_cookie(conn, user_row["id"], response)
+    return build_user_payload(conn, user_row)
+
+
+@app.post("/api/logout")
+def logout(response: Response, mahjong_session: str = Cookie(default=None)):
+  if mahjong_session:
+    with get_db_connection() as conn:
+      conn.execute("DELETE FROM sessions WHERE token = ?", (mahjong_session,))
+  response.delete_cookie(key=SESSION_COOKIE_NAME, path="/")
+  return {"status": "logged_out"}
+
+
+@app.get("/api/me")
+def get_me(mahjong_session: str = Cookie(default=None)):
+  with get_db_connection() as conn:
+    user_row = get_current_user_row(conn, mahjong_session)
+    return build_user_payload(conn, user_row)
+
+
+@app.put("/api/me")
+def update_me(
+    profile: ProfileUpdate, mahjong_session: str = Cookie(default=None)
+):
+  with get_db_connection() as conn:
+    user_row = get_current_user_row(conn, mahjong_session)
+    display_name = profile.display_name.strip() or user_row["username"]
+    bio = profile.bio.strip()
+    avatar_url = validate_avatar_url(profile.avatar_url)
+
+    conn.execute(
+        """
+        UPDATE users
+        SET display_name = ?, bio = ?, avatar_url = ?
+        WHERE id = ?
+        """,
+        (display_name, bio, avatar_url, user_row["id"]),
+    )
+    updated_row = conn.execute(
+        "SELECT * FROM users WHERE id = ?", (user_row["id"],)
+    ).fetchone()
+    return build_user_payload(conn, updated_row)
+
+
+@app.put("/api/me/password")
+def update_password(
+    pw_update: PasswordUpdate, mahjong_session: str = Cookie(default=None)
+):
+  with get_db_connection() as conn:
+    user_row = get_current_user_row(conn, mahjong_session)
+    if len(pw_update.new_password) < 6:
+      raise HTTPException(
+          status_code=400,
+          detail="New password must be at least 6 characters long.",
+      )
+    new_hash = hash_password(pw_update.new_password)
+    conn.execute(
+        "UPDATE users SET password_hash = ? WHERE id = ?",
+        (new_hash, user_row["id"]),
+    )
+    return {"status": "password_updated"}
+
+
+# Load your custom trained YOLO model weights lazily on first scan
+MODEL_PATH = "best.pt"
+ONNX_PATH = "best.onnx"
+_model = None
+
+
+def get_yolo_model() -> YOLO:
+  global _model
+  if _model is None:
+    if not os.path.exists(MODEL_PATH):
+      raise RuntimeError(f"Model weights not found at {MODEL_PATH}")
+    if not os.path.exists(ONNX_PATH):
+      print("Exporting model to ONNX format...")
+      temp_model = YOLO(MODEL_PATH)
+      temp_model.export(format="onnx")
+    _model = YOLO(MODEL_PATH)
+  return _model
+
 
 @app.post("/scan-hand")
 async def scan_hand(file: UploadFile = File(...)):
   try:
+    yolo_model = get_yolo_model()
     contents = await file.read()
     image = Image.open(io.BytesIO(contents)).convert("RGB")
 
     # Run YOLO inference with optimized image size
-    results = model(
+    results = yolo_model(
             image,
             imgsz=320,
             conf=0.5,  # Slightly raise confidence to filter weak ghost boxes
@@ -102,7 +415,7 @@ async def scan_hand(file: UploadFile = File(...)):
       boxes = r.boxes
       for box in boxes:
         cls_id = int(box.cls[0])
-        cls_name = model.names[cls_id]
+        cls_name = yolo_model.names[cls_id]
         conf = float(box.conf[0])
         xyxy = box.xyxy[0].tolist()  # [x1, y1, x2, y2]
         x_center = (xyxy[0] + xyxy[2]) / 2

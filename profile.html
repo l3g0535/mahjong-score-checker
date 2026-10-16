@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Personal Profile - Score Checker</title>
+  <link rel="icon" type="image/png" href="mylogo.png">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="display profile-page">
+    <header class="app-header">
+      <div class="header-brand">
+        <a href="index.html" class="back-link" title="Back to Score Checker">&larr; Score Checker</a>
+        <h1>Personal Profile</h1>
+      </div>
+      <div class="header-auth">
+        <button type="button" id="profileLogoutBtn" class="auth-logout-btn">Log Out</button>
+      </div>
+    </header>
+
+    <!-- 1. Avatar & Identity Card -->
+    <section class="profile-card">
+      <div class="profile-identity-header">
+        <div class="avatar-preview-wrapper">
+          <img id="profileAvatarPreview" src="tiles/01-white-dragon.svg" alt="Profile Avatar" class="profile-avatar-large">
+        </div>
+        <div class="profile-identity-meta">
+          <h2 id="profileHeaderDisplayName">Loading...</h2>
+          <div class="profile-badges">
+            <span id="profileUsernameBadge" class="username-badge">@user</span>
+            <span id="profileJoinedDate" class="joined-date">Joined recently</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="avatar-controls">
+        <button type="button" id="toggleTilePickerBtn" class="secondary-btn">Choose Mahjong Tile</button>
+        <label for="customAvatarInput" class="secondary-btn file-upload-label">Upload Custom Photo</label>
+        <input type="file" id="customAvatarInput" accept="image/png,image/jpeg,image/webp" class="hidden">
+      </div>
+      <p class="field-hint">Choose any Mahjong tile SVG or upload a PNG, JPEG, or WebP image (max 2MB).</p>
+
+      <div id="avatarPickerGrid" class="avatar-tile-grid hidden"></div>
+      <div id="avatarErrorMsg" class="form-feedback error-feedback hidden"></div>
+    </section>
+
+    <!-- 2. Personal Information Form -->
+    <section class="profile-card">
+      <h3>Personal Information</h3>
+      <form id="profileInfoForm" class="profile-form">
+        <div class="form-field">
+          <label for="profileDisplayName">Display Name</label>
+          <input type="text" id="profileDisplayName" name="display_name" maxlength="50" placeholder="Your display name" required>
+        </div>
+
+        <div class="form-field">
+          <label for="profileBio">Bio / About Me</label>
+          <textarea id="profileBio" name="bio" rows="3" maxlength="300" placeholder="Favorite yaku, preferred seat wind, or house rules..."></textarea>
+        </div>
+
+        <div id="profileSaveFeedback" class="form-feedback hidden"></div>
+
+        <button type="submit" id="saveProfileBtn" class="primary-btn">Save Profile</button>
+      </form>
+    </section>
+
+    <!-- 3. Play History Section (Ready for Hand Logging) -->
+    <section class="profile-card">
+      <div class="section-header-row">
+        <h3>Play History</h3>
+        <span id="playHistoryCount" class="history-count-badge">0 Hands</span>
+      </div>
+      <p class="field-hint">Winning hands, fan scores, and table sessions associated with your account.</p>
+
+      <div id="playHistoryEmpty" class="history-empty-state">
+        <p class="empty-title">No winning hands logged yet</p>
+        <p class="empty-subtitle">When you log winning hands from the Score Checker, your Winning Hand tiles, Fan Score, and Table / Game Session will appear here.</p>
+      </div>
+
+      <div id="playHistoryTableWrapper" class="history-table-wrapper hidden">
+        <table class="history-table">
+          <thead>
+            <tr>
+              <th>Winning Hand</th>
+              <th>Score (Fan)</th>
+              <th>Table / Game Session</th>
+            </tr>
+          </thead>
+          <tbody id="playHistoryBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- 4. Change Password Form -->
+    <section class="profile-card">
+      <h3>Change Password</h3>
+      <form id="changePasswordForm" class="profile-form">
+        <div class="form-field">
+          <label for="newPassword">New Password</label>
+          <input type="password" id="newPassword" name="new_password" autocomplete="new-password" placeholder="At least 6 characters" required>
+        </div>
+
+        <div class="form-field">
+          <label for="confirmNewPassword">Confirm New Password</label>
+          <input type="password" id="confirmNewPassword" name="confirm_new_password" autocomplete="new-password" placeholder="Re-enter new password" required>
+        </div>
+
+        <div id="passwordFeedback" class="form-feedback hidden"></div>
+
+        <button type="submit" id="changePasswordBtn" class="primary-btn">Update Password</button>
+      </form>
+    </section>
+  </main>
+
+  <script src="profile.js"></script>
+</body>
+</html>

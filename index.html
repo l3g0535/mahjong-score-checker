@@ -11,8 +11,22 @@
 <body>
   <main class="display">
     <header class="app-header">
-      <img src="mylogo.png" alt="Logo" class="app-logo">
-      <h1>Score Checker</h1>
+      <div class="header-brand">
+        <img src="mylogo.png" alt="Logo" class="app-logo">
+        <h1>Score Checker</h1>
+      </div>
+      <div class="header-auth" id="authHeaderBar">
+        <div id="guestAuthActions" class="auth-actions">
+          <button type="button" id="openAuthModalBtn" class="auth-header-btn">Log In / Sign Up</button>
+        </div>
+        <div id="userAuthActions" class="auth-actions hidden">
+          <a href="profile.html" id="headerProfileLink" class="profile-chip" title="View Personal Profile">
+            <img id="headerAvatar" src="tiles/01-white-dragon.svg" alt="Avatar" class="header-avatar">
+            <span id="headerDisplayName">Player</span>
+          </a>
+          <button type="button" id="headerLogoutBtn" class="auth-logout-btn">Log Out</button>
+        </div>
+      </div>
     </header>
       <!-- Top Container: Side-by-Side Squares -->
       <div class="sticky-hand-container">
@@ -110,6 +124,38 @@
     </section>
   </main>
 
+  <!-- Authentication Modal -->
+  <div id="authModal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="authModalTitle">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h2 id="authModalTitle">Log In</h2>
+        <button type="button" id="closeAuthModalBtn" class="modal-close-btn" aria-label="Close">&times;</button>
+      </div>
+
+      <div class="auth-tabs">
+        <button type="button" id="tabLoginBtn" class="auth-tab active">Log In</button>
+        <button type="button" id="tabSignupBtn" class="auth-tab">Sign Up</button>
+      </div>
+
+      <form id="authForm" class="auth-form">
+        <div class="form-field">
+          <label for="authUsername">Username</label>
+          <input type="text" id="authUsername" name="username" autocomplete="username" placeholder="At least 3 characters" required>
+        </div>
+
+        <div class="form-field">
+          <label for="authPassword">Password</label>
+          <input type="password" id="authPassword" name="password" autocomplete="current-password" placeholder="At least 6 characters" required>
+        </div>
+
+        <div id="authErrorMsg" class="form-feedback error-feedback hidden"></div>
+
+        <button type="submit" id="authSubmitBtn" class="primary-btn full-width-btn">Log In</button>
+      </form>
+    </div>
+  </div>
+
   <script src="app.js"></script>
+  <script src="auth.js"></script>
 </body>
 </html>

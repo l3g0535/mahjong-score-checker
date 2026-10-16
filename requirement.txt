@@ -4,3 +4,5 @@ ultralytics
 python-multipart
 pillow
 pydantic
+pytest
+httpx
