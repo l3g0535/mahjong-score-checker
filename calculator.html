@@ -3,7 +3,7 @@
 
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="Mahjong points calculator: build or scan a hand and see its fan score.">
   <title>Points Calculator | Score Checker</title>
   <link rel="icon" type="image/png" href="mylogo.png">
@@ -24,12 +24,6 @@
       </div>
     </header>
 
-    <!-- Optional camera scan: fills the hand only (no table / win logging on this page) -->
-    <div class="camera-scan-row">
-      <button type="button" id="openCameraBtn" class="camera-trigger-btn">📷 Scan Hand with Camera</button>
-      <input type="file" id="nativeCameraInput" accept="image/*" capture="environment" class="hidden">
-    </div>
-
 
     <div class="sticky-hand-container">
       <div class="score-card">
@@ -49,7 +43,11 @@
 
       <div class="hand-actions">
         <span id="tileCount">Tiles: 0</span>
-        <button id="clearBtn" class="clear-btn">Clear Hand</button>
+        <div class="hand-action-buttons">
+          <button type="button" id="openCameraBtn" class="camera-trigger-btn">📷 Scan Hand</button>
+          <input type="file" id="nativeCameraInput" accept="image/*" capture="environment" class="hidden">
+          <button id="clearBtn" class="clear-btn">Clear Hand</button>
+        </div>
       </div>
     </div>
 

@@ -562,6 +562,22 @@ h4,
   letter-spacing: 0.02em;
 }
 
+.hand-action-buttons {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.hand-actions .camera-trigger-btn {
+  width: auto;
+  margin: 0;
+  padding: 8px 14px;
+  font-size: 0.84rem;
+  box-shadow: 0 4px 0 var(--brick-red-shadow);
+  white-space: nowrap;
+}
+
 .btn-clear {
   display: inline-flex !important;
   flex: 0 0 auto !important;
@@ -1840,8 +1856,9 @@ h4,
   #tileCount {
     font-size: 0.85rem;
   }
-  .clear-btn {
-    padding: 6px 12px;
+  .clear-btn,
+  .hand-actions .camera-trigger-btn {
+    padding: 6px 10px;
     font-size: 0.8rem;
   }
 }
@@ -1851,3 +1868,30 @@ h4,
 .table-roster { list-style: none; margin: 10px 0 0; padding: 10px 12px; border-radius: 10px; background: var(--recessed-surface); font-size: .85rem; text-align: left; }
 .table-roster li { padding: 2px 0; }
 .table-roster.hidden { display: none; }
+
+/* ==========================================
+   Mobile refinements
+   ========================================== */
+/* Grids never force horizontal overflow on narrow screens */
+.admin-tables-grid { grid-template-columns: repeat(auto-fill, minmax(min(280px, 100%), 1fr)); }
+.admin-form-grid { grid-template-columns: repeat(auto-fit, minmax(min(200px, 100%), 1fr)); }
+.admin-seat-user, .profile-identity-meta, .leaderboard-row { min-width: 0; }
+.admin-seat-user span, .profile-identity-meta h2, .available-table-name { overflow-wrap: anywhere; }
+body { overflow-x: hidden; }
+
+@media (max-width: 480px) {
+  /* Show every tile of a suit at once instead of sideways scrolling */
+  .tile-row { min-width: 0; display: grid; grid-template-columns: repeat(9, minmax(0, 1fr)); gap: 4px; }
+  .tile-row .tile-btn { padding: 2px; }
+  .tile-row .tile-btn img { width: 100%; height: auto; aspect-ratio: 36 / 50; }
+  .tile-row-wrapper { overflow-x: visible; }
+  /* Comfortable touch targets */
+  .primary-btn, .secondary-btn, .auth-header-btn, .auth-logout-btn { min-height: 40px; }
+  .modal-card { max-width: calc(100vw - 24px); }
+  .profile-identity-header { flex-wrap: wrap; }
+  .admin-seat-row { flex-wrap: wrap; gap: 6px; }
+  .table-header-actions { flex-wrap: wrap; }
+}
+@supports (padding: max(0px)) {
+  .display { padding-bottom: max(12px, env(safe-area-inset-bottom)); }
+}
